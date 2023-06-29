@@ -18,8 +18,8 @@ dist
 # obsidian
 data.json
 vault/.obsidian/workspace.json
-vault/.obsidian/plugins/obsidian-poker/*
-!vault/.obsidian/plugins/obsidian-poker/.hotreload
+vault/.obsidian/plugins/poker/*
+!vault/.obsidian/plugins/poker/.hotreload
 
 # Exclude macOS Finder (System Explorer) View States
 .DS_Store

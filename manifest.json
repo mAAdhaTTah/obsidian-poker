@@ -1,6 +1,6 @@
 {
-  "id": "obsidian-poker",
-  "name": "Obsidian Poker",
+  "id": "poker",
+  "name": "Poker",
   "version": "1.0.0",
   "minAppVersion": "0.15.0",
   "description": "Renders poker hands in Obsidian.",
