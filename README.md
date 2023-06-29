@@ -8,7 +8,7 @@ Plugin to render poker cards in Obsidian.
 
 ## How to Install
 
-In Obsidian go to `Settings > Third-party plugins > Community Plugins > Browse` and search for `Obsidian Poker`.
+In Obsidian go to `Settings > Third-party plugins > Community Plugins > Browse` and search for `Poker`.
 
 ### Manual installation
 
@@ -16,7 +16,7 @@ Unzip the [latest release](https://github.com/mAAdhaTTah/obsidian-poker/releases
 
 ## How to Configure
 
-The plugin allows you to customize the prefix you use for inline cards. Go to `Settings -> Obsidian Poker` to customize. The plugin defaults to `pkr` as the prefix.
+The plugin allows you to customize the prefix you use for inline cards. Go to `Settings -> Poker` to customize. The plugin defaults to `pkr` as the prefix.
 
 ## How to Use
 

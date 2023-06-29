@@ -48,15 +48,13 @@ const context = await esbuild.context({
         to: [
           prod
             ? "./dist/manifest.json"
-            : "./vault/.obsidian/plugins/obsidian-poker/manifest.json",
+            : "./vault/.obsidian/plugins/poker/manifest.json",
         ],
       },
       watch: true,
     }),
   ],
-  outfile: prod
-    ? "dist/main.js"
-    : "vault/.obsidian/plugins/obsidian-poker/main.js",
+  outfile: prod ? "dist/main.js" : "vault/.obsidian/plugins/poker/main.js",
 });
 
 if (prod) {

@@ -208,7 +208,7 @@ class PokerSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Settings for Obsidian Poker." });
+    containerEl.createEl("h2", { text: "Settings for Poker." });
 
     new Setting(containerEl)
       .setName("Prefix")
