@@ -1,137 +1,226 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+  App,
+  MarkdownPostProcessor,
+  MarkdownRenderChild,
+  Plugin,
+  PluginSettingTab,
+  Setting,
+} from "obsidian";
+import svgAc from "./cards/Ac.svg";
+import svgAd from "./cards/Ad.svg";
+import svgAh from "./cards/Ah.svg";
+import svgAs from "./cards/As.svg";
+import svgKc from "./cards/Kc.svg";
+import svgKd from "./cards/Kd.svg";
+import svgKh from "./cards/Kh.svg";
+import svgKs from "./cards/Ks.svg";
+import svgQc from "./cards/Qc.svg";
+import svgQd from "./cards/Qd.svg";
+import svgQh from "./cards/Qh.svg";
+import svgQs from "./cards/Qs.svg";
+import svgJc from "./cards/Jc.svg";
+import svgJd from "./cards/Jd.svg";
+import svgJh from "./cards/Jh.svg";
+import svgJs from "./cards/Js.svg";
+import svgTc from "./cards/Tc.svg";
+import svgTd from "./cards/Td.svg";
+import svgTh from "./cards/Th.svg";
+import svgTs from "./cards/Ts.svg";
+import svg9c from "./cards/9c.svg";
+import svg9d from "./cards/9d.svg";
+import svg9h from "./cards/9h.svg";
+import svg9s from "./cards/9s.svg";
+import svg8c from "./cards/8c.svg";
+import svg8d from "./cards/8d.svg";
+import svg8h from "./cards/8h.svg";
+import svg8s from "./cards/8s.svg";
+import svg7c from "./cards/7c.svg";
+import svg7d from "./cards/7d.svg";
+import svg7h from "./cards/7h.svg";
+import svg7s from "./cards/7s.svg";
+import svg6c from "./cards/6c.svg";
+import svg6d from "./cards/6d.svg";
+import svg6h from "./cards/6h.svg";
+import svg6s from "./cards/6s.svg";
+import svg5c from "./cards/5c.svg";
+import svg5d from "./cards/5d.svg";
+import svg5h from "./cards/5h.svg";
+import svg5s from "./cards/5s.svg";
+import svg4c from "./cards/4c.svg";
+import svg4d from "./cards/4d.svg";
+import svg4h from "./cards/4h.svg";
+import svg4s from "./cards/4s.svg";
+import svg3c from "./cards/3c.svg";
+import svg3d from "./cards/3d.svg";
+import svg3h from "./cards/3h.svg";
+import svg3s from "./cards/3s.svg";
+import svg2c from "./cards/2c.svg";
+import svg2d from "./cards/2d.svg";
+import svg2h from "./cards/2h.svg";
+import svg2s from "./cards/2s.svg";
 
-// Remember to rename these classes and interfaces!
+const CARDS = {
+  Ac: svgAc,
+  Ad: svgAd,
+  Ah: svgAh,
+  As: svgAs,
+  Kc: svgKc,
+  Kd: svgKd,
+  Kh: svgKh,
+  Ks: svgKs,
+  Qc: svgQc,
+  Qd: svgQd,
+  Qh: svgQh,
+  Qs: svgQs,
+  Jc: svgJc,
+  Jd: svgJd,
+  Jh: svgJh,
+  Js: svgJs,
+  Tc: svgTc,
+  Td: svgTd,
+  Th: svgTh,
+  Ts: svgTs,
+  "9c": svg9c,
+  "9d": svg9d,
+  "9h": svg9h,
+  "9s": svg9s,
+  "8c": svg8c,
+  "8d": svg8d,
+  "8h": svg8h,
+  "8s": svg8s,
+  "7c": svg7c,
+  "7d": svg7d,
+  "7h": svg7h,
+  "7s": svg7s,
+  "6c": svg6c,
+  "6d": svg6d,
+  "6h": svg6h,
+  "6s": svg6s,
+  "5c": svg5c,
+  "5d": svg5d,
+  "5h": svg5h,
+  "5s": svg5s,
+  "4c": svg4c,
+  "4d": svg4d,
+  "4h": svg4h,
+  "4s": svg4s,
+  "3c": svg3c,
+  "3d": svg3d,
+  "3h": svg3h,
+  "3s": svg3s,
+  "2c": svg2c,
+  "2d": svg2d,
+  "2h": svg2h,
+  "2s": svg2s,
+};
 
-interface MyPluginSettings {
-	mySetting: string;
+const CARD_REGEX = "([2-9TKQKA][cdhs])";
+
+interface PokerSettings {
+  prefix: string;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: PokerSettings = {
+  prefix: "pkr",
+};
+
+class CardIconsRenderChild extends MarkdownRenderChild {
+  cards: string;
+
+  constructor(containerEl: HTMLElement, cards: string) {
+    super(containerEl);
+
+    this.cards = cards;
+  }
+
+  onload() {
+    const replacement = this.containerEl.createSpan({
+      attr: {
+        style: `display: inline-flex;vertical-align: top;`,
+      },
+    });
+    let idx = 0;
+    while (idx < this.cards.length) {
+      const card = this.cards.substring(idx, idx + 2);
+      if (this.validCard(card)) replacement.innerHTML += CARDS[card];
+      idx = idx + 2;
+    }
+    this.containerEl.replaceWith(replacement);
+  }
+
+  validCard(card: string): card is keyof typeof CARDS {
+    return card in CARDS;
+  }
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+class InlinePokerCardRenderer {
+  constructor(private app: App, private plugin: Poker) {}
 
-	async onload() {
-		await this.loadSettings();
+  get boardRegex() {
+    return new RegExp(`${this.plugin.settings.prefix}:(${CARD_REGEX}+)`);
+  }
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
+  process: MarkdownPostProcessor = (el, ctx) => {
+    for (const codeblock of Array.from(el.querySelectorAll("code"))) {
+      const text = codeblock.innerText.trim();
+      const match = this.boardRegex.exec(text);
 
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
-			}
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-			}
-		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
-
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
-	}
-
-	onunload() {
-
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+      if (match) {
+        const [, cards] = match;
+        ctx.addChild(new CardIconsRenderChild(codeblock, cards));
+      }
+    }
+  };
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+export default class Poker extends Plugin {
+  settings: PokerSettings;
+  renderer: InlinePokerCardRenderer;
 
-	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
-	}
+  async onload() {
+    await this.loadSettings();
+    this.renderer = new InlinePokerCardRenderer(this.app, this);
+    this.addSettingTab(new PokerSettingTab(this.app, this));
+    this.registerMarkdownPostProcessor(this.renderer.process);
+  }
 
-	onClose() {
-		const {contentEl} = this;
-		contentEl.empty();
-	}
+  onunload() {}
+
+  async loadSettings() {
+    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+  }
+
+  async saveSettings() {
+    await this.saveData(this.settings);
+  }
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class PokerSettingTab extends PluginSettingTab {
+  plugin: Poker;
 
-	constructor(app: App, plugin: MyPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
+  constructor(app: App, plugin: Poker) {
+    super(app, plugin);
+    this.plugin = plugin;
+  }
 
-	display(): void {
-		const {containerEl} = this;
+  display(): void {
+    const { containerEl } = this;
 
-		containerEl.empty();
+    containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+    containerEl.createEl("h2", { text: "Settings for Obsidian Poker." });
 
-		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
-			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
-				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
-					await this.plugin.saveSettings();
-				}));
-	}
+    new Setting(containerEl)
+      .setName("Prefix")
+      .setDesc("Prefix to use for rendering inline playing cards.")
+      .addText(text =>
+        text
+          .setPlaceholder("pkr")
+          .setValue(this.plugin.settings.prefix)
+          .onChange(async value => {
+            this.plugin.settings.prefix = value;
+            await this.plugin.saveSettings();
+          }),
+      );
+  }
 }
