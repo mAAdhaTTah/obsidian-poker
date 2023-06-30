@@ -206,8 +206,6 @@ class PokerSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Settings for Poker." });
-
     new Setting(containerEl)
       .setName("Prefix")
       .setDesc("Prefix to use for rendering inline playing cards.")
