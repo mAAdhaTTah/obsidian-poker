@@ -1,6 +1,6 @@
 # Obsidian Poker
 
-Plugin to render poker cards in Obsidian.
+Render poker cards in Obsidian.
 
 ## Screenshot
 
