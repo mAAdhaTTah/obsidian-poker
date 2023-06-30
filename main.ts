@@ -135,9 +135,7 @@ class CardIconsRenderChild extends MarkdownRenderChild {
 
   onload() {
     const replacement = this.containerEl.createSpan({
-      attr: {
-        style: `display: inline-flex;vertical-align: top;`,
-      },
+      cls: "pkr-inline-cards",
     });
     let idx = 0;
     while (idx < this.cards.length) {

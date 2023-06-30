@@ -12,6 +12,11 @@ if you want to view the source, please visit the github repository of this plugi
 
 const prod = process.argv[2] === "production";
 
+const assetForFile = file => ({
+  from: [`./${file}`],
+  to: [prod ? `./dist/${file}` : `./vault/.obsidian/plugins/poker/${file}`],
+});
+
 const context = await esbuild.context({
   banner: {
     js: banner,
@@ -43,14 +48,7 @@ const context = await esbuild.context({
     svg(),
     copy({
       resolveFrom: "cwd",
-      assets: {
-        from: ["./manifest.json"],
-        to: [
-          prod
-            ? "./dist/manifest.json"
-            : "./vault/.obsidian/plugins/poker/manifest.json",
-        ],
-      },
+      assets: [assetForFile("./manifest.json"), assetForFile("./styles.css")],
       watch: true,
     }),
   ],
