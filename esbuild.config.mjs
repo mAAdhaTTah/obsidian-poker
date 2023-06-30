@@ -48,7 +48,7 @@ const context = await esbuild.context({
     svg(),
     copy({
       resolveFrom: "cwd",
-      assets: [assetForFile("./manifest.json"), assetForFile("./styles.css")],
+      assets: [assetForFile("manifest.json"), assetForFile("styles.css")],
       watch: true,
     }),
   ],
