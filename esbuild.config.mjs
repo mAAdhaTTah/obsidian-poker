@@ -14,7 +14,9 @@ const prod = process.argv[2] === "production";
 
 const assetForFile = file => ({
   from: [`./${file}`],
-  to: [prod ? `./dist/${file}` : `./vault/.obsidian/plugins/poker/${file}`],
+  to: [
+    prod ? `./dist/poker/${file}` : `./vault/.obsidian/plugins/poker/${file}`,
+  ],
 });
 
 const context = await esbuild.context({
@@ -52,7 +54,9 @@ const context = await esbuild.context({
       watch: true,
     }),
   ],
-  outfile: prod ? "dist/main.js" : "vault/.obsidian/plugins/poker/main.js",
+  outfile: prod
+    ? "dist/poker/main.js"
+    : "vault/.obsidian/plugins/poker/main.js",
 });
 
 if (prod) {
