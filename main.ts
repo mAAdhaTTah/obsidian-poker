@@ -1,3 +1,5 @@
+import { syntaxTree } from "@codemirror/language";
+import { Range } from "@codemirror/state";
 import {
   App,
   MarkdownPostProcessor,
@@ -6,6 +8,15 @@ import {
   PluginSettingTab,
   Setting,
 } from "obsidian";
+import {
+  ViewUpdate,
+  PluginValue,
+  EditorView,
+  ViewPlugin,
+  Decoration,
+  WidgetType,
+  DecorationSet,
+} from "@codemirror/view";
 import svgAc from "./cards/Ac.svg";
 import svgAd from "./cards/Ad.svg";
 import svgAh from "./cards/Ah.svg";
@@ -124,17 +135,92 @@ const DEFAULT_SETTINGS: PokerSettings = {
   prefix: "pkr",
 };
 
-class CardIconsRenderChild extends MarkdownRenderChild {
-  cards: string;
+class CardIconsWidget extends WidgetType {
+  cards: CardRenderer;
+  constructor(cards: string) {
+    super();
+    this.cards = new CardRenderer(cards);
+  }
+  toDOM(view: EditorView): HTMLElement {
+    return this.cards.getElement(view.dom);
+  }
+}
 
-  constructor(containerEl: HTMLElement, cards: string) {
-    super(containerEl);
+const isCursorInsideTag = (view: EditorView, start: number, end: number) => {
+  const cursor = view.state.selection.main.head;
+  return cursor > start - 1 && cursor < end + 1;
+};
 
-    this.cards = cards;
+const isSelectionContainsTag = (
+  view: EditorView,
+  start: number,
+  end: number,
+) => {
+  const selectionBegin = view.state.selection.main.from;
+  const selectionEnd = view.state.selection.main.to;
+  return selectionEnd > start - 1 && selectionBegin < end + 1;
+};
+
+class CardIconsViewPlugin implements PluginValue {
+  static plugin: Poker;
+  decorations: DecorationSet;
+
+  constructor(view: EditorView) {
+    this.decorations = this.buildDecoration(view);
   }
 
-  onload() {
-    const replacement = this.containerEl.createSpan({
+  update(update: ViewUpdate) {
+    if (
+      update.docChanged ||
+      update.startState.selection.main !== update.state.selection.main
+    ) {
+      this.decorations = this.buildDecoration(update.view);
+    }
+  }
+
+  buildDecoration(view: EditorView) {
+    const widgets: Range<Decoration>[] = [];
+    for (const { from, to } of view.visibleRanges) {
+      syntaxTree(view.state).iterate({
+        from,
+        to,
+        enter: node => {
+          if (node.type.name === "inline-code") {
+            const text = view.state.doc.sliceString(node.from, node.to);
+            const match = CardIconsViewPlugin.plugin.boardRegex.exec(text);
+            console.log(
+              !isCursorInsideTag(view, node.from - 1, node.to + 1),
+              !isSelectionContainsTag(view, node.from - 1, node.to + 1),
+            );
+
+            if (
+              match &&
+              !isCursorInsideTag(view, node.from - 1, node.to + 1) &&
+              !isSelectionContainsTag(view, node.from - 1, node.to + 1)
+            ) {
+              const [, cards] = match;
+              const deco = Decoration.replace({
+                widget: new CardIconsWidget(cards),
+              });
+              widgets.push(deco.range(node.from - 1, node.to + 1));
+            }
+          }
+        },
+      });
+    }
+    return Decoration.set(widgets);
+  }
+
+  destroy() {
+    // ...
+  }
+}
+
+class CardRenderer {
+  constructor(private cards: string) {}
+
+  getElement(el: HTMLElement) {
+    const replacement = el.createSpan({
       cls: "pkr-inline-cards",
     });
     let idx = 0;
@@ -143,7 +229,7 @@ class CardIconsRenderChild extends MarkdownRenderChild {
       if (this.validCard(card)) replacement.innerHTML += CARDS[card];
       idx = idx + 2;
     }
-    this.containerEl.replaceWith(replacement);
+    return replacement;
   }
 
   validCard(card: string): card is keyof typeof CARDS {
@@ -151,17 +237,27 @@ class CardIconsRenderChild extends MarkdownRenderChild {
   }
 }
 
-class InlinePokerCardRenderer {
-  constructor(private app: App, private plugin: Poker) {}
+class CardIconsRenderChild extends MarkdownRenderChild {
+  cards: CardRenderer;
 
-  get boardRegex() {
-    return new RegExp(`${this.plugin.settings.prefix}:(${CARD_REGEX}+)`);
+  constructor(containerEl: HTMLElement, cards: string) {
+    super(containerEl);
+
+    this.cards = new CardRenderer(cards);
   }
+
+  onload() {
+    this.containerEl.replaceWith(this.cards.getElement(this.containerEl));
+  }
+}
+
+class InlinePokerCardRenderer {
+  constructor(private plugin: Poker) {}
 
   process: MarkdownPostProcessor = (el, ctx) => {
     for (const codeblock of Array.from(el.querySelectorAll("code"))) {
       const text = codeblock.innerText.trim();
-      const match = this.boardRegex.exec(text);
+      const match = this.plugin.boardRegex.exec(text);
 
       if (match) {
         const [, cards] = match;
@@ -176,10 +272,17 @@ export default class Poker extends Plugin {
   renderer: InlinePokerCardRenderer;
 
   async onload() {
+    // Hate this, why?
+    CardIconsViewPlugin.plugin = this;
     await this.loadSettings();
-    this.renderer = new InlinePokerCardRenderer(this.app, this);
+    this.renderer = new InlinePokerCardRenderer(this);
     this.addSettingTab(new PokerSettingTab(this.app, this));
     this.registerMarkdownPostProcessor(this.renderer.process);
+    this.registerEditorExtension(
+      ViewPlugin.fromClass(CardIconsViewPlugin, {
+        decorations: value => value.decorations,
+      }),
+    );
   }
 
   onunload() {}
@@ -190,6 +293,10 @@ export default class Poker extends Plugin {
 
   async saveSettings() {
     await this.saveData(this.settings);
+  }
+
+  get boardRegex() {
+    return new RegExp(`${this.settings.prefix}:(${CARD_REGEX}+)`);
   }
 }
 
