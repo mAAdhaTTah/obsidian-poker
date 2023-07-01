@@ -30,8 +30,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          zip -r poker.zip dist
+          cd dist
+          zip -r poker.zip poker
+          cd ..
 
           gh release create "$tag" \
             --title="$tag" \
-            dist/main.js dist/manifest.json dist/styles.css poker.zip
+            dist/poker/main.js dist/poker/manifest.json dist/poker/styles.css dist/poker.zip
