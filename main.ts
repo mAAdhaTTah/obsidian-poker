@@ -125,7 +125,7 @@ const CARDS = {
   "2s": svg2s,
 };
 
-const CARD_REGEX = "([2-9TKQKA][cdhs])";
+const CARD_REGEX = "([2-9TJQKA][cdhs])";
 
 interface PokerSettings {
   prefix: string;
