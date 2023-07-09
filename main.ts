@@ -161,8 +161,19 @@ const isSelectionContainsTag = (
   return selectionEnd > start - 1 && selectionBegin < end + 1;
 };
 
-class CardIconsViewPlugin implements PluginValue {
-  static plugin: Poker;
+class BaseCardIconsViewPlugin implements PluginValue {
+  static fromPlugin(plugin: Poker) {
+    return ViewPlugin.fromClass(
+      class CardIconsViewPlugin extends BaseCardIconsViewPlugin {
+        plugin = plugin;
+      },
+      {
+        decorations: value => value.decorations,
+      },
+    );
+  }
+
+  plugin: Poker;
   decorations: DecorationSet;
 
   constructor(view: EditorView) {
@@ -187,11 +198,7 @@ class CardIconsViewPlugin implements PluginValue {
         enter: node => {
           if (node.type.name === "inline-code") {
             const text = view.state.doc.sliceString(node.from, node.to);
-            const match = CardIconsViewPlugin.plugin.boardRegex.exec(text);
-            console.log(
-              !isCursorInsideTag(view, node.from - 1, node.to + 1),
-              !isSelectionContainsTag(view, node.from - 1, node.to + 1),
-            );
+            const match = this.plugin.boardRegex.exec(text);
 
             if (
               match &&
@@ -272,17 +279,11 @@ export default class Poker extends Plugin {
   renderer: InlinePokerCardRenderer;
 
   async onload() {
-    // Hate this, why?
-    CardIconsViewPlugin.plugin = this;
     await this.loadSettings();
     this.renderer = new InlinePokerCardRenderer(this);
     this.addSettingTab(new PokerSettingTab(this.app, this));
     this.registerMarkdownPostProcessor(this.renderer.process);
-    this.registerEditorExtension(
-      ViewPlugin.fromClass(CardIconsViewPlugin, {
-        decorations: value => value.decorations,
-      }),
-    );
+    this.registerEditorExtension(BaseCardIconsViewPlugin.fromPlugin(this));
   }
 
   onunload() {}
