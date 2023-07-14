@@ -2,11 +2,15 @@ import { syntaxTree } from "@codemirror/language";
 import { Range } from "@codemirror/state";
 import {
   App,
+  ButtonComponent,
+  Editor,
   MarkdownPostProcessor,
   MarkdownRenderChild,
+  Modal,
   Plugin,
   PluginSettingTab,
   Setting,
+  TextComponent,
 } from "obsidian";
 import {
   ViewUpdate,
@@ -123,9 +127,48 @@ const CARDS = {
   "2d": svg2d,
   "2h": svg2h,
   "2s": svg2s,
-};
+} as const;
 
 const CARD_REGEX = "([2-9TJQKA][cdhs])";
+
+class Deck {
+  cards: Array<keyof typeof CARDS>;
+
+  constructor(cards = Object.keys(CARDS) as Deck["cards"]) {
+    this.cards = cards;
+  }
+
+  /**
+   * https://stackoverflow.com/a/2450976/2757940
+   */
+  shuffle() {
+    const cards = [...this.cards];
+    let currentIndex = cards.length,
+      randomIndex;
+
+    // While there remain elements to shuffle.
+    while (currentIndex != 0) {
+      // Pick a remaining element.
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+
+      // And swap it with the current element.
+      [cards[currentIndex], cards[randomIndex]] = [
+        cards[randomIndex],
+        cards[currentIndex],
+      ];
+    }
+
+    return new Deck(cards);
+  }
+
+  /**
+   * @param count Number of cards to draw.
+   */
+  draw(count: number): [Deck["cards"], Deck] {
+    return [this.cards.slice(0, count), new Deck(this.cards.slice(count + 1))];
+  }
+}
 
 interface PokerSettings {
   prefix: string;
@@ -276,6 +319,49 @@ class InlinePokerCardRenderer {
   };
 }
 
+class InsertRandomCardsModal extends Modal {
+  count = 0;
+
+  onSubmit: (count: number) => void;
+  text: TextComponent;
+  btn: ButtonComponent;
+
+  constructor(app: App, onSubmit: (count: number) => void) {
+    super(app);
+    this.onSubmit = onSubmit;
+  }
+
+  onOpen() {
+    const { contentEl } = this;
+
+    new Setting(contentEl)
+      .setName("How many cards do you want to insert?")
+      .addText(text => {
+        this.text = text;
+        text.onChange(value => {
+          this.count = parseInt(value, 10);
+          this.btn.setDisabled(Number.isNaN(this.count));
+        });
+      });
+
+    new Setting(contentEl).addButton(btn => {
+      this.btn = btn;
+      btn
+        .setButtonText("Submit")
+        .setCta()
+        .onClick(() => {
+          this.close();
+          this.onSubmit(this.count);
+        });
+    });
+  }
+
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+  }
+}
+
 export default class Poker extends Plugin {
   settings: PokerSettings;
   renderer: InlinePokerCardRenderer;
@@ -286,7 +372,22 @@ export default class Poker extends Plugin {
     this.addSettingTab(new PokerSettingTab(this.app, this));
     this.registerMarkdownPostProcessor(this.renderer.process);
     this.registerEditorExtension(BaseCardIconsViewPlugin.fromPlugin(this));
+
+    this.addCommand({
+      id: "insert-random-cards",
+      name: "Insert Random Cards",
+      editorCallback: (editor: Editor) => {
+        new InsertRandomCardsModal(this.app, count =>
+          this.insertRandomCards(editor, count),
+        ).open();
+      },
+    });
   }
+
+  insertRandomCards = (editor: Editor, count: number): void => {
+    const [cards] = new Deck().shuffle().draw(count);
+    editor.replaceRange(`\`pkr:${cards.join("")}\``, editor.getCursor());
+  };
 
   onunload() {}
 
