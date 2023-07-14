@@ -1,6 +1,6 @@
 # Obsidian Poker
 
-Render poker cards in Obsidian.
+Easily document and view your poker hands.
 
 ## Screenshot
 
