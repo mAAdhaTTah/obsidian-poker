@@ -165,7 +165,13 @@ class BaseCardIconsViewPlugin implements PluginValue {
   static fromPlugin(plugin: Poker) {
     return ViewPlugin.fromClass(
       class CardIconsViewPlugin extends BaseCardIconsViewPlugin {
-        plugin = plugin;
+        constructor(view: EditorView) {
+          super();
+          this.plugin = plugin;
+          // This is the order it needs to go in.
+          // Any other way to do this?
+          this.decorations = this.buildDecoration(view);
+        }
       },
       {
         decorations: value => value.decorations,
@@ -175,10 +181,6 @@ class BaseCardIconsViewPlugin implements PluginValue {
 
   plugin: Poker;
   decorations: DecorationSet;
-
-  constructor(view: EditorView) {
-    this.decorations = this.buildDecoration(view);
-  }
 
   update(update: ViewUpdate) {
     if (
