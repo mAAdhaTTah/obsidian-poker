@@ -1,6 +1,6 @@
 {
   "name": "obsidian-poker",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Easily document and view your poker hands.",
   "main": "dist/main.js",
   "scripts": {
