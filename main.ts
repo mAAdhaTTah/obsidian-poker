@@ -277,7 +277,7 @@ class BaseCardIconsViewPlugin implements PluginValue {
         from,
         to,
         enter: node => {
-          if (node.type.name === "inline-code") {
+          if (node.type.name.includes("inline-code")) {
             const text = view.state.doc.sliceString(node.from, node.to);
             const match = this.plugin.boardRegex.exec(text);
 
