@@ -390,6 +390,15 @@ class InsertRandomCardsModal extends Modal {
           this.onSubmit(this.count);
         });
     });
+
+    this.scope.register([], "Enter", (evt: KeyboardEvent) => {
+      if (evt.isComposing) {
+        return;
+      }
+
+      this.close();
+      this.onSubmit(this.count);
+    });
   }
 
   onClose() {
@@ -422,7 +431,10 @@ export default class Poker extends Plugin {
 
   insertRandomCards = (editor: Editor, count: number): void => {
     const [cards] = new Deck().shuffle().draw(count);
-    editor.replaceRange(`\`pkr:${cards.join("")}\``, editor.getCursor());
+    editor.replaceRange(
+      `\`${this.settings.prefix}:${cards.join("")}\``,
+      editor.getCursor(),
+    );
   };
 
   onunload() {}
