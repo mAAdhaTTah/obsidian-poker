@@ -22,7 +22,7 @@ The plugin allows you to customize the prefix you use for inline cards. Go to `S
 
 ### Rendering Cards
 
-To render a card, add backticks your chosen prefix, and a colon, then write the card(s) in standard 2 letter notation (e.g. `As` for the ace of spades).
+To render a card, add backticks your chosen prefix, and a colon, then write the card(s) in standard 2 letter notation, with a rank & suit pair. Ranks should be one of `AKQJT98765432X` (with X being rendered as `X` and meaning "any rank"); suits should be one of `dhscx` (with X being rendered as `x` and meaning "any suit").
 
 #### Example
 
