@@ -260,6 +260,7 @@ class BaseCardIconsViewPlugin implements PluginValue {
 
   plugin: Poker;
   decorations: DecorationSet;
+  widgets: Record<string, Range<Decoration>> = {};
 
   update(update: ViewUpdate) {
     if (
@@ -281,16 +282,22 @@ class BaseCardIconsViewPlugin implements PluginValue {
             const text = view.state.doc.sliceString(node.from, node.to);
             const match = this.plugin.boardRegex.exec(text);
 
+            const nodeFrom = node.from - 1;
+            const nodeTo = node.to + 1;
             if (
               match &&
-              !isCursorInsideTag(view, node.from - 1, node.to + 1) &&
-              !isSelectionContainsTag(view, node.from - 1, node.to + 1)
+              !isCursorInsideTag(view, nodeFrom, nodeTo) &&
+              !isSelectionContainsTag(view, nodeFrom, nodeTo)
             ) {
               const [, cards] = match;
-              const deco = Decoration.replace({
-                widget: new CardIconsWidget(cards),
-              });
-              widgets.push(deco.range(node.from - 1, node.to + 1));
+              const cacheKey = `f:${nodeFrom};t:${nodeTo};c:${cards}`;
+              if (!(cacheKey in this.widgets)) {
+                const deco = Decoration.replace({
+                  widget: new CardIconsWidget(cards),
+                });
+                this.widgets[cacheKey] = deco.range(nodeFrom, nodeTo);
+              }
+              widgets.push(this.widgets[cacheKey]);
             }
           }
         },
@@ -305,19 +312,25 @@ class BaseCardIconsViewPlugin implements PluginValue {
 }
 
 class CardRenderer {
+  cache: WeakMap<HTMLElement, HTMLElement> = new WeakMap();
   constructor(private cards: string) {}
 
   getElement(el: HTMLElement) {
-    const replacement = el.createSpan({
-      cls: "pkr-inline-cards",
-    });
-    let idx = 0;
-    while (idx < this.cards.length) {
-      const card = this.cards.substring(idx, idx + 2);
-      if (this.validCard(card)) replacement.innerHTML += CARDS[card];
-      idx = idx + 2;
+    if (!this.cache.has(el)) {
+      const replacement = el.createSpan({
+        cls: "pkr-inline-cards",
+      });
+      let idx = 0;
+      while (idx < this.cards.length) {
+        const card = this.cards.substring(idx, idx + 2);
+        if (this.validCard(card)) replacement.innerHTML += CARDS[card];
+        idx = idx + 2;
+      }
+
+      this.cache.set(el, replacement);
     }
-    return replacement;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    return this.cache.get(el)!;
   }
 
   validCard(card: string): card is keyof typeof CARDS {
