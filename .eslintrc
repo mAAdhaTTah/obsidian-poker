@@ -1,7 +1,7 @@
 {
   "root": true,
   "parser": "@typescript-eslint/parser",
-  "env": { "node": true },
+  "env": { "node": true, "browser": true },
   "plugins": ["@typescript-eslint"],
   "extends": [
     "eslint:recommended",
@@ -17,5 +17,6 @@
     "@typescript-eslint/ban-ts-comment": "off",
     "no-prototype-builtins": "off",
     "@typescript-eslint/no-empty-function": "off"
-  }
+  },
+  "ignorePatterns": ["vault/", "dist/"]
 }
