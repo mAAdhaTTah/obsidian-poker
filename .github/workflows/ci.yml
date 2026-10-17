@@ -10,13 +10,17 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v7
         with:
-          node-version: 18.x
+          node-version: 22.x
           cache: npm
       - name: Install node_modules
         run: npm ci
@@ -24,16 +28,21 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: Attest release assets
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/poker/main.js
+            dist/poker/manifest.json
+            dist/poker/styles.css
       - name: Create release
-        if: ${{ startsWith(github.event.ref, 'refs/tags') }}
+        if: ${{ startsWith(github.ref, 'refs/tags/') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           tag="${GITHUB_REF#refs/tags/}"
-          cd dist
-          zip -r poker.zip poker
-          cd ..
 
           gh release create "$tag" \
             --title="$tag" \
-            dist/poker/main.js dist/poker/manifest.json dist/poker/styles.css dist/poker.zip
+            dist/poker/main.js dist/poker/manifest.json dist/poker/styles.css
