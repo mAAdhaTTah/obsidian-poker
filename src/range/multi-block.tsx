@@ -12,7 +12,8 @@ import {
   countCombos,
   EditorToolbar,
   ErrorView,
-  formatCombos,
+  Legend,
+  type LegendEntry,
   TOTAL_HANDS,
   useSave,
 } from "./editing";
@@ -79,7 +80,6 @@ export const MultiRangeBlock = ({ spec, onSave }: MultiRangeBlockProps) => {
   return (
     <div className="pkr-range">
       <div className="pkr-range-header">
-        <Legend parsed={parsed} colors={colors} />
         <button className="pkr-range-button" onClick={() => setEditing(true)}>
           Edit
         </button>
@@ -89,46 +89,30 @@ export const MultiRangeBlock = ({ spec, onSave }: MultiRangeBlockProps) => {
         actions={model.actions}
         order={model.order}
       />
+      <Legend entries={legendEntries(parsed, colors)} />
     </div>
   );
 };
 
-type LegendProps = { parsed: ParsedBlock; colors: string[] };
-
-/** One row per action in block order, then dead, each with its combo count. */
-const Legend = ({ parsed, colors }: LegendProps) => {
+/** One entry per action in block order, then dead. */
+const legendEntries = (
+  parsed: ParsedBlock,
+  colors: string[],
+): LegendEntry[] => {
   const dead = parsed.dead ? countCombos(parsed.dead) : 0;
   const assigned = parsed.actions.reduce(
     (sum, action) => sum + (action.hands ? countCombos(action.hands) : 0),
     0,
   );
-  return (
-    <ul className="pkr-range-legend">
-      {parsed.actions.map((action, i) => (
-        <li key={action.name} className="pkr-range-legend-item">
-          <span
-            className="pkr-range-swatch"
-            style={{ background: colors[i] }}
-          />
-          <span className="pkr-range-legend-label">{action.name}</span>
-          <span className="pkr-range-legend-count">
-            {formatCombos(
-              action.hands
-                ? countCombos(action.hands)
-                : TOTAL_HANDS - dead - assigned,
-            )}
-          </span>
-        </li>
-      ))}
-      {parsed.dead && (
-        <li className="pkr-range-legend-item">
-          <span className="pkr-range-swatch mod-dead" />
-          <span className="pkr-range-legend-label">Dead</span>
-          <span className="pkr-range-legend-count">{formatCombos(dead)}</span>
-        </li>
-      )}
-    </ul>
-  );
+  const entries: LegendEntry[] = parsed.actions.map((action, i) => ({
+    label: action.name,
+    color: colors[i],
+    combos: action.hands
+      ? countCombos(action.hands)
+      : TOTAL_HANDS - dead - assigned,
+  }));
+  if (parsed.dead) entries.push({ label: "Dead", color: null, combos: dead });
+  return entries;
 };
 
 type MultiRangeEditorProps = {

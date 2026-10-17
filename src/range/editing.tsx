@@ -102,3 +102,32 @@ export const ErrorView = ({ message }: { message: string }) => (
     <pre className="pkr-range-error-message">{message}</pre>
   </div>
 );
+
+export type LegendEntry = {
+  label: string;
+  /** Swatch color; `null` draws the dead-hand hatch instead. */
+  color: string | null;
+  combos: number;
+};
+
+/** Swatch, label and combo count per entry, laid out in aligned columns. */
+export const Legend = ({ entries }: { entries: LegendEntry[] }) => (
+  <div className="pkr-range-legend" role="list">
+    {entries.map(entry => (
+      <div key={entry.label} className="pkr-range-legend-item" role="listitem">
+        <span
+          className={
+            entry.color === null
+              ? "pkr-range-swatch mod-dead"
+              : "pkr-range-swatch"
+          }
+          style={entry.color === null ? undefined : { background: entry.color }}
+        />
+        <span className="pkr-range-legend-label">{entry.label}</span>
+        <span className="pkr-range-legend-count">
+          {formatCombos(entry.combos)}
+        </span>
+      </div>
+    ))}
+  </div>
+);

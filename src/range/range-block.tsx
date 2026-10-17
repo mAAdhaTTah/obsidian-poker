@@ -30,8 +30,10 @@ import { parseSpec, type BlockSpec } from "./spec";
 const IN_RANGE = 0;
 const PASSIVE = 1;
 
+const IN_RANGE_COLOR = "var(--interactive-accent)";
+
 const ACTIONS: EditorActionSpec[] = [
-  { id: "in", label: "In range", color: "var(--interactive-accent)" },
+  { id: "in", label: "In range", color: IN_RANGE_COLOR },
   { id: "out", label: "Not in range", color: "var(--spotlab-hm-cell-bg)" },
 ];
 const ORDER = [IN_RANGE];
@@ -79,9 +81,7 @@ const SingleRangeBlock = ({ spec, onSave }: SingleRangeBlockProps) => {
     () =>
       attempt(() => {
         const hands = parseRange(spec.source);
-        const matrix = rangeToMatrix(hands, {
-          color: "var(--interactive-accent)",
-        });
+        const matrix = rangeToMatrix(hands, { color: IN_RANGE_COLOR });
         return { hands, matrix };
       }),
     [spec],
@@ -107,14 +107,14 @@ const SingleRangeBlock = ({ spec, onSave }: SingleRangeBlockProps) => {
   return (
     <div className="pkr-range">
       <div className="pkr-range-header">
-        <span className="pkr-range-title">
-          {formatCombos(countCombos(hands))}
-        </span>
         <button className="pkr-range-button" onClick={() => setEditing(true)}>
           Edit
         </button>
       </div>
       <RangeMatrix {...matrix} />
+      <span className="pkr-range-title">
+        {formatCombos(countCombos(hands))}
+      </span>
     </div>
   );
 };
