@@ -10,6 +10,7 @@ import {
   Plugin,
   PluginSettingTab,
   Setting,
+  SettingDefinitionItem,
   TextComponent,
 } from "obsidian";
 import {
@@ -455,7 +456,7 @@ export default class Poker extends Plugin {
 
     this.addCommand({
       id: "insert-random-cards",
-      name: "Insert Random Cards",
+      name: "Insert random cards",
       editorCallback: (editor: Editor) => {
         new InsertRandomCardsModal(this.app, count =>
           this.insertRandomCards(editor, count),
@@ -502,6 +503,10 @@ export default class Poker extends Plugin {
   }
 }
 
+const PREFIX_NAME = "Prefix";
+const PREFIX_DESC =
+  "Prefix for inline playing cards (`pkr:AsKs`) and range blocks (```pkr-range). Reload the plugin after changing it for range blocks to pick it up.";
+
 class PokerSettingTab extends PluginSettingTab {
   plugin: Poker;
 
@@ -510,19 +515,34 @@ class PokerSettingTab extends PluginSettingTab {
     this.plugin = plugin;
   }
 
+  // Obsidian 1.13+ renders the tab from these definitions, which also makes
+  // them searchable; display() remains the fallback for older versions.
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    return [
+      {
+        name: PREFIX_NAME,
+        desc: PREFIX_DESC,
+        control: {
+          type: "text",
+          key: "prefix",
+          placeholder: DEFAULT_SETTINGS.prefix,
+          defaultValue: DEFAULT_SETTINGS.prefix,
+        },
+      },
+    ];
+  }
+
   display(): void {
     const { containerEl } = this;
 
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName("Prefix")
-      .setDesc(
-        "Prefix for inline playing cards (`pkr:AsKs`) and range blocks (```pkr-range). Reload the plugin after changing it for range blocks to pick it up.",
-      )
+      .setName(PREFIX_NAME)
+      .setDesc(PREFIX_DESC)
       .addText(text =>
         text
-          .setPlaceholder("pkr")
+          .setPlaceholder(DEFAULT_SETTINGS.prefix)
           .setValue(this.plugin.settings.prefix)
           .onChange(async value => {
             this.plugin.settings.prefix = value;
