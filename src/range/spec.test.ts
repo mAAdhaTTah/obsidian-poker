@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
 import { initRange } from "@spotlab/range";
+import { dedent } from "../test-utils";
 import {
   parseRanges,
   parseSpec,
@@ -36,16 +37,14 @@ describe("parseSpec", () => {
   });
 
   it("reads short and long actions in order", () => {
-    const result = multi(
-      [
-        "Raise 2.5bb:",
-        "  range: QQ+,AKs,AQs:0.5",
-        "  color: red",
-        "Call: JJ-99,AQs:0.5,AJs",
-        "Fold:",
-        "dead: 22-55",
-      ].join("\n"),
-    );
+    const result = multi(dedent`
+      Raise 2.5bb:
+        range: QQ+,AKs,AQs:0.5
+        color: red
+      Call: JJ-99,AQs:0.5,AJs
+      Fold:
+      dead: 22-55
+    `);
     expect(result.actions).toEqual([
       {
         name: "Raise 2.5bb",
@@ -74,7 +73,12 @@ describe("parseSpec", () => {
   });
 
   it("accepts a long-form remainder with only a color", () => {
-    expect(multi("Raise: QQ+\nFold:\n  color: blue").actions[1]).toEqual({
+    const result = multi(dedent`
+      Raise: QQ+
+      Fold:
+        color: blue
+    `);
+    expect(result.actions[1]).toEqual({
       name: "Fold",
       range: null,
       color: "blue",
@@ -88,14 +92,59 @@ describe("parseSpec", () => {
 
   it.each([
     ["Raise: [QQ, KK]", /must be a range string/],
-    ["Raise:\n  range: QQ+\n  size: 2.5", /unknown setting `size`/],
-    ["Raise:\n  range: 5", /`range` must be a range string/],
-    ["Raise:\n  range: QQ+\n  color: 5", /`color` must be a string/],
-    ["Raise: QQ+\nCall:\nFold:", /Only one action can be left empty/],
+    [
+      dedent`
+        Raise:
+          range: QQ+
+          size: 2.5
+      `,
+      /unknown setting `size`/,
+    ],
+    [
+      dedent`
+        Raise:
+          range: 5
+      `,
+      /`range` must be a range string/,
+    ],
+    [
+      dedent`
+        Raise:
+          range: QQ+
+          color: 5
+      `,
+      /`color` must be a string/,
+    ],
+    [
+      dedent`
+        Raise: QQ+
+        Call:
+        Fold:
+      `,
+      /Only one action can be left empty/,
+    ],
     ["dead: 22-55", /at least one action/],
-    ["Raise: QQ+\ndead: [22]", /`dead` must be a range string/],
-    ["Raise: QQ+\nparent: AA", /`parent` isn't supported yet/],
-    ["Raise: QQ+\n  bad: indent", /Couldn't read this block as YAML/],
+    [
+      dedent`
+        Raise: QQ+
+        dead: [22]
+      `,
+      /`dead` must be a range string/,
+    ],
+    [
+      dedent`
+        Raise: QQ+
+        parent: AA
+      `,
+      /`parent` isn't supported yet/,
+    ],
+    [
+      dedent`
+        Raise: QQ+
+          bad: indent
+      `,
+      /Couldn't read this block as YAML/,
+    ],
   ])("rejects %j", (source, message) => {
     expect(() => spec(source)).toThrow(SpecError);
     expect(() => spec(source)).toThrow(message);
@@ -110,33 +159,55 @@ describe("parseSpec", () => {
 
 describe("parseRanges", () => {
   it("parses every action and dead", () => {
-    const parsed = parseRanges(multi("Raise: AKs:0.5\nFold:\ndead: AKs:0.5"));
+    const parsed = parseRanges(
+      multi(dedent`
+        Raise: AKs:0.5
+        Fold:
+        dead: AKs:0.5
+      `),
+    );
     expect(parsed.actions[0].hands).toHaveLength(4);
     expect(parsed.actions[1].hands).toBeNull();
     expect(parsed.dead).toHaveLength(4);
   });
 
   it("allows actions and dead to fill a hand exactly", () => {
-    expect(() =>
-      parseRanges(multi("Raise: AKs:0.5\nCall: AKs:0.25\ndead: AKs:0.25")),
-    ).not.toThrow();
+    const source = dedent`
+      Raise: AKs:0.5
+      Call: AKs:0.25
+      dead: AKs:0.25
+    `;
+    expect(() => parseRanges(multi(source))).not.toThrow();
   });
 
   it("rejects hands whose actions and dead add up to more than 1", () => {
-    expect(() =>
-      parseRanges(multi("Raise: AKs:0.5\nCall: AKs:0.25\ndead: AKs:0.5")),
-    ).toThrow(/AhKh \(1\.25\)/);
+    const source = dedent`
+      Raise: AKs:0.5
+      Call: AKs:0.25
+      dead: AKs:0.5
+    `;
+    expect(() => parseRanges(multi(source))).toThrow(/AhKh \(1\.25\)/);
   });
 
   it("lists at most five hands that go over", () => {
-    expect(() => parseRanges(multi("Raise: AKo\nCall: AKo"))).toThrow(
-      /and 7 more\.$/,
-    );
+    const source = dedent`
+      Raise: AKo
+      Call: AKo
+    `;
+    expect(() => parseRanges(multi(source))).toThrow(/and 7 more\.$/);
   });
 
   it("names the action whose range is invalid", () => {
-    expect(() => parseRanges(multi("Raise: QQ+\nCall: ZZ"))).toThrow(/^Call: /);
-    expect(() => parseRanges(multi("Raise: QQ+\ndead: ZZ"))).toThrow(/^dead: /);
+    const badCall = dedent`
+      Raise: QQ+
+      Call: ZZ
+    `;
+    const badDead = dedent`
+      Raise: QQ+
+      dead: ZZ
+    `;
+    expect(() => parseRanges(multi(badCall))).toThrow(/^Call: /);
+    expect(() => parseRanges(multi(badDead))).toThrow(/^dead: /);
   });
 });
 
@@ -144,28 +215,38 @@ describe("stringifySpec", () => {
   const roundTrip = (source: string) => stringifySpec(multi(source), stringify);
 
   it("keeps key order and each action's form", () => {
-    const source = [
-      "Raise 2.5bb:",
-      "  range: QQ+,AKs,AQs:0.5",
-      "  color: red",
-      "Call: JJ-99,AQs:0.5,AJs",
-      "dead: 22-55",
-      "Fold:",
-    ].join("\n");
+    const source = dedent`
+      Raise 2.5bb:
+        range: QQ+,AKs,AQs:0.5
+        color: red
+      Call: JJ-99,AQs:0.5,AJs
+      dead: 22-55
+      Fold:
+    `;
     expect(roundTrip(source)).toBe(source);
   });
 
   it("quotes values YAML would otherwise misread", () => {
-    const out = roundTrip('Raise:\n  range: QQ+\n  color: "#e5484d"');
+    const out = roundTrip(dedent`
+      Raise:
+        range: QQ+
+        color: "#e5484d"
+    `);
     expect(out).toContain('color: "#e5484d"');
     expect(multi(out).actions[0].color).toBe("#e5484d");
   });
 
   it("writes updated ranges", () => {
-    const spec: BlockSpec = multi("Raise: QQ+\nCall: JJ");
+    const spec: BlockSpec = multi(dedent`
+      Raise: QQ+
+      Call: JJ
+    `);
     if (spec.kind !== "multi") throw new Error();
     spec.actions[0].range = "KK+";
-    expect(stringifySpec(spec, stringify)).toBe("Raise: KK+\nCall: JJ");
+    expect(stringifySpec(spec, stringify)).toBe(dedent`
+      Raise: KK+
+      Call: JJ
+    `);
   });
 });
 
@@ -180,38 +261,48 @@ describe("colors", () => {
   });
 
   it("skips palette colors the block already names", () => {
-    expect(
-      resolveColors(
-        multi("Raise:\n  range: QQ+\n  color: red\nCall: JJ\nFold:").actions,
-      ),
-    ).toEqual(["var(--color-red)", "var(--color-green)", "var(--color-blue)"]);
+    const source = dedent`
+      Raise:
+        range: QQ+
+        color: red
+      Call: JJ
+      Fold:
+    `;
+    expect(resolveColors(multi(source).actions)).toEqual([
+      "var(--color-red)",
+      "var(--color-green)",
+      "var(--color-blue)",
+    ]);
   });
 
   it("reuses the palette once every color is named", () => {
-    const source = [
-      "red",
-      "green",
-      "blue",
-      "orange",
-      "purple",
-      "cyan",
-      "yellow",
-      "pink",
-    ]
-      .map((color, i) => `A${i}:\n  range: AA\n  color: ${color}`)
-      .join("\n");
-    const colors = resolveColors(
-      multi(`${source}
-Rest:`).actions,
-    );
+    const source = dedent`
+      A0: { range: AA, color: red }
+      A1: { range: AA, color: green }
+      A2: { range: AA, color: blue }
+      A3: { range: AA, color: orange }
+      A4: { range: AA, color: purple }
+      A5: { range: AA, color: cyan }
+      A6: { range: AA, color: yellow }
+      A7: { range: AA, color: pink }
+      Rest:
+    `;
+    const colors = resolveColors(multi(source).actions);
     expect(colors[colors.length - 1]).toBe("var(--color-red)");
   });
 
   it("hands out palette colors in order to actions without one", () => {
-    expect(
-      resolveColors(
-        multi("A: AA\nB:\n  range: KK\n  color: pink\nC: QQ").actions,
-      ),
-    ).toEqual(["var(--color-red)", "var(--color-pink)", "var(--color-green)"]);
+    const source = dedent`
+      A: AA
+      B:
+        range: KK
+        color: pink
+      C: QQ
+    `;
+    expect(resolveColors(multi(source).actions)).toEqual([
+      "var(--color-red)",
+      "var(--color-pink)",
+      "var(--color-green)",
+    ]);
   });
 });
