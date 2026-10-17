@@ -12,7 +12,7 @@ In Obsidian go to `Settings > Third-party plugins > Community Plugins > Browse` 
 
 ### Manual installation
 
-Unzip the [latest release](https://github.com/mAAdhaTTah/obsidian-poker/releases/latest) into your `<vault>/.obsidian/plugins/` folder.
+Download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/mAAdhaTTah/obsidian-poker/releases/latest) into your `<vault>/.obsidian/plugins/poker/` folder.
 
 ## How to Configure
 
