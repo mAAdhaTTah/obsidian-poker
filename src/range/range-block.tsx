@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import {
-  COMBOS,
   formatRange,
-  handsOfCombo,
   parseRange,
   toComboWeights,
   type HandFrequency,
 } from "@spotlab/range";
 import {
   ActionWeightSliders,
+  cellsToRanges,
   RangeGrid,
   RangeMatrixEditor,
   seedCells,
@@ -45,42 +44,15 @@ const sameWeights = (a: EditorCell, b: EditorCell) =>
   a.avail === b.avail && a.weights.every((w, i) => w === b.weights[i]);
 
 /**
- * Rebuild the range from the painted cells. The editor quantizes each combo
- * to a whole percent and can't represent suit-specific hands, so only combos
- * the user actually changed are re-derived; every untouched combo keeps its
- * original hands verbatim (e.g. `AhKh:0.7` survives an edit elsewhere).
+ * Rebuild the range from the painted cells. Combos the user didn't touch keep
+ * their original hands verbatim (e.g. `AhKh:0.7` survives an edit elsewhere).
  */
 const toRange = (
   original: HandFrequency[],
   seed: EditorCell[],
   cells: EditorCell[],
-): string => {
-  const byCombo = new Map<string, HandFrequency[]>();
-  const comboOf = new Map<string, string>();
-  for (const combo of COMBOS) {
-    for (const hand of handsOfCombo(combo)) comboOf.set(hand, combo);
-  }
-  for (const hf of original) {
-    const combo = comboOf.get(hf.hand);
-    if (!combo) continue;
-    const list = byCombo.get(combo) ?? [];
-    list.push(hf);
-    byCombo.set(combo, list);
-  }
-
-  const hands: HandFrequency[] = [];
-  cells.forEach((cell, i) => {
-    const combo = COMBOS[i];
-    if (sameWeights(cell, seed[i])) {
-      hands.push(...(byCombo.get(combo) ?? []));
-      return;
-    }
-    const frequency = (cell.weights[IN_RANGE] / 100) * cell.avail;
-    if (frequency <= 0) return;
-    for (const hand of handsOfCombo(combo)) hands.push({ hand, frequency });
-  });
-  return formatRange(hands);
-};
+): string =>
+  formatRange(cellsToRanges([original, null], seed, cells)[IN_RANGE]);
 
 const summarize = (hands: HandFrequency[]) => {
   const combos = hands.reduce((sum, hf) => sum + hf.frequency, 0);
