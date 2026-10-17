@@ -314,26 +314,39 @@ class BaseCardIconsViewPlugin implements PluginValue {
   }
 }
 
+const parsedCards = new Map<string, Element>();
+
+function getCardSvg(card: keyof typeof CARDS): Element {
+  let svg = parsedCards.get(card);
+  if (!svg) {
+    svg = new DOMParser().parseFromString(CARDS[card], "image/svg+xml")
+      .documentElement;
+    parsedCards.set(card, svg);
+  }
+  return svg;
+}
+
 class CardRenderer {
   cache: WeakMap<HTMLElement, HTMLElement> = new WeakMap();
   constructor(private cards: string) {}
 
   getElement(el: HTMLElement) {
-    if (!this.cache.has(el)) {
-      const replacement = el.createSpan({
+    let replacement = this.cache.get(el);
+    if (!replacement) {
+      replacement = el.createSpan({
         cls: "pkr-inline-cards",
       });
       let idx = 0;
       while (idx < this.cards.length) {
         const card = this.cards.substring(idx, idx + 2);
-        if (this.validCard(card)) replacement.innerHTML += CARDS[card];
+        if (this.validCard(card))
+          replacement.appendChild(getCardSvg(card).cloneNode(true));
         idx = idx + 2;
       }
 
       this.cache.set(el, replacement);
     }
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    return this.cache.get(el)!;
+    return replacement;
   }
 
   validCard(card: string): card is keyof typeof CARDS {
