@@ -68,3 +68,41 @@
   font-size: var(--font-ui-small);
   white-space: pre-wrap;
 }
+
+.pkr-range-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-1) var(--size-4-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-ui-small);
+}
+
+.pkr-range-legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+.pkr-range-legend-count {
+  color: var(--text-muted);
+}
+
+.pkr-range-swatch {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+}
+
+/* The matrix's dead hatch is drawn over a cell; this one has to read on the
+   page background. */
+.pkr-range-swatch.mod-dead {
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--text-faint) 0 1px,
+    var(--background-primary) 1px 4px
+  );
+}
