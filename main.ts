@@ -258,8 +258,8 @@ class BaseCardIconsViewPlugin implements PluginValue {
     );
   }
 
-  plugin: Poker;
-  decorations: DecorationSet;
+  plugin!: Poker;
+  decorations!: DecorationSet;
   widgets: Record<string, Range<Decoration>> = {};
 
   update(update: ViewUpdate) {
@@ -372,8 +372,8 @@ class InsertRandomCardsModal extends Modal {
   count = 0;
 
   onSubmit: (count: number) => void;
-  text: TextComponent;
-  btn: ButtonComponent;
+  text!: TextComponent;
+  btn!: ButtonComponent;
 
   constructor(app: App, onSubmit: (count: number) => void) {
     super(app);
@@ -421,8 +421,8 @@ class InsertRandomCardsModal extends Modal {
 }
 
 export default class Poker extends Plugin {
-  settings: PokerSettings;
-  renderer: InlinePokerCardRenderer;
+  settings!: PokerSettings;
+  renderer!: InlinePokerCardRenderer;
 
   async onload() {
     await this.loadSettings();
