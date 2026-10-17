@@ -33,7 +33,15 @@ type YamlStringify = (value: unknown) => string;
 
 const LONG_KEYS = new Set(["range", "color"]);
 
-export class SpecError extends Error {}
+export class SpecError extends Error {
+  // `Error`'s own `cause` option is ES2022, past this project's ES2018 lib.
+  readonly cause?: unknown;
+
+  constructor(message: string, options?: { cause?: unknown }) {
+    super(message);
+    this.cause = options?.cause;
+  }
+}
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -46,11 +54,7 @@ export function parseSpec(source: string, parseYaml: YamlParse): BlockSpec {
   try {
     data = parseYaml(trimmed);
   } catch (e) {
-    throw new SpecError(
-      `Couldn't read this block as YAML: ${
-        e instanceof Error ? e.message : String(e)
-      }`,
-    );
+    throw new SpecError("Couldn't read this block as YAML", { cause: e });
   }
   if (!isPlainObject(data)) return { kind: "single", source: trimmed };
 
@@ -126,9 +130,7 @@ export function parseRanges(
     try {
       return parseRange(range.trim());
     } catch (e) {
-      throw new SpecError(
-        `${label}: ${e instanceof Error ? e.message : String(e)}`,
-      );
+      throw new SpecError(label, { cause: e });
     }
   };
 

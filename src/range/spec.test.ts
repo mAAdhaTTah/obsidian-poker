@@ -90,6 +90,20 @@ describe("parseSpec", () => {
     expect(multi('Raise: ""').actions[0].range).toBe("");
   });
 
+  it("keeps the YAML error as the cause", () => {
+    try {
+      spec(dedent`
+        Raise: QQ+
+          bad: indent
+      `);
+    } catch (e) {
+      expect((e as SpecError).message).toBe("Couldn't read this block as YAML");
+      expect((e as SpecError).cause).toBeInstanceOf(Error);
+      return;
+    }
+    throw new Error("expected parseSpec to throw");
+  });
+
   it.each([
     ["Raise: [QQ, KK]", /must be a range string/],
     [
@@ -197,17 +211,27 @@ describe("parseRanges", () => {
     expect(() => parseRanges(multi(source))).toThrow(/and 7 more\.$/);
   });
 
-  it("names the action whose range is invalid", () => {
-    const badCall = dedent`
+  it("names the action whose range is invalid, keeping the parser error", () => {
+    const thrown = (source: string) => {
+      try {
+        parseRanges(multi(source));
+      } catch (e) {
+        return e as SpecError;
+      }
+      throw new Error("expected parseRanges to throw");
+    };
+    const badCall = thrown(dedent`
       Raise: QQ+
       Call: ZZ
-    `;
-    const badDead = dedent`
+    `);
+    const badDead = thrown(dedent`
       Raise: QQ+
       dead: ZZ
-    `;
-    expect(() => parseRanges(multi(badCall))).toThrow(/^Call: /);
-    expect(() => parseRanges(multi(badDead))).toThrow(/^dead: /);
+    `);
+    expect(badCall).toBeInstanceOf(SpecError);
+    expect(badCall.message).toBe("Call");
+    expect(badCall.cause).toBeInstanceOf(Error);
+    expect(badDead.message).toBe("dead");
   });
 });
 

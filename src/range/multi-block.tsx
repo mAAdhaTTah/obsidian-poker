@@ -9,6 +9,7 @@ import {
 import {
   cellsChanged,
   countCombos,
+  describeError,
   EditorToolbar,
   ErrorView,
   Legend,
@@ -47,7 +48,7 @@ export const MultiRangeBlock = ({ spec, onSave }: MultiRangeBlockProps) => {
     } catch (e) {
       return {
         ok: false as const,
-        message: e instanceof Error ? e.message : String(e),
+        message: describeError(e),
       };
     }
   }, [spec]);

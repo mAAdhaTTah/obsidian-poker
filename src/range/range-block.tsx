@@ -18,6 +18,7 @@ import {
 import {
   cellsChanged,
   countCombos,
+  describeError,
   EditorToolbar,
   ErrorView,
   formatCombos,
@@ -38,16 +39,13 @@ const ACTIONS: EditorActionSpec[] = [
 ];
 const ORDER = [IN_RANGE];
 
-const errorMessage = (e: unknown) =>
-  e instanceof Error ? e.message : String(e);
-
 type Parsed<T> = { ok: true; value: T } | { ok: false; message: string };
 
 const attempt = <T,>(fn: () => T): Parsed<T> => {
   try {
     return { ok: true, value: fn() };
   } catch (e) {
-    return { ok: false, message: errorMessage(e) };
+    return { ok: false, message: describeError(e) };
   }
 };
 
