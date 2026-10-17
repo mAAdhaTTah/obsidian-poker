@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { stringifyYaml } from "obsidian";
 import {
-  ActionWeightSliders,
   RangeMatrix,
   RangeMatrixEditor,
   type EditorCell,
@@ -17,6 +16,7 @@ import {
   TOTAL_HANDS,
   useSave,
 } from "./editing";
+import { WeightSliders } from "./weight-sliders";
 import { buildModel, toActionRanges, type MatrixModel } from "./model";
 import {
   parseRanges,
@@ -166,7 +166,7 @@ const MultiRangeEditor = ({
         onBrushChange={setBrush}
         onToolChange={setTool}
       />
-      <ActionWeightSliders
+      <WeightSliders
         actions={actions}
         order={order}
         weights={brush}

@@ -7,7 +7,6 @@ import {
   type HandFrequency,
 } from "@spotlab/range";
 import {
-  ActionWeightSliders,
   cellsToRanges,
   RangeMatrix,
   RangeMatrixEditor,
@@ -24,6 +23,7 @@ import {
   formatCombos,
   useSave,
 } from "./editing";
+import { WeightSliders } from "./weight-sliders";
 import { MultiRangeBlock } from "./multi-block";
 import { parseSpec, type BlockSpec } from "./spec";
 
@@ -170,7 +170,7 @@ const SingleRangeEditor = ({
         onBrushChange={setBrush}
         onToolChange={setTool}
       />
-      <ActionWeightSliders
+      <WeightSliders
         actions={ACTIONS}
         order={ORDER}
         weights={brush}

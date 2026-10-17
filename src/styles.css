@@ -113,3 +113,39 @@
     var(--background-primary) 1px 4px
   );
 }
+
+.pkr-range-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.pkr-range-slider {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr 4.5rem;
+  align-items: center;
+  gap: var(--size-4-3);
+  font-size: var(--font-ui-small);
+}
+
+.pkr-range-slider-label {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  min-width: 0;
+}
+
+.pkr-range-slider-note {
+  color: var(--text-muted);
+}
+
+.pkr-range-slider .slider {
+  width: 100%;
+}
+
+.pkr-range-slider-value {
+  width: 100%;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
