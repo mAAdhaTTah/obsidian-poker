@@ -173,7 +173,7 @@ const RangeEditor = ({ hands, onCancel, onSave }: RangeEditorProps) => {
           </button>
           <button
             className="pkr-range-button mod-cta"
-            onClick={save}
+            onClick={() => void save()}
             disabled={saving}
           >
             Save
