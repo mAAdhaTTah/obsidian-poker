@@ -1,6 +1,6 @@
 import esbuild from "esbuild";
 import process from "process";
-import builtins from "builtin-modules";
+import { builtinModules } from "node:module";
 import svg from "esbuild-plugin-svg";
 import { copy } from "esbuild-plugin-copy";
 
@@ -39,7 +39,7 @@ const context = await esbuild.context({
     "@lezer/common",
     "@lezer/highlight",
     "@lezer/lr",
-    ...builtins,
+    ...builtinModules,
   ],
   define: {
     "process.env.NODE_ENV": JSON.stringify(prod ? "production" : "development"),
