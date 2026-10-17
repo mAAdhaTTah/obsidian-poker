@@ -27,9 +27,7 @@ const ACTIONS: EditorActionSpec[] = [
   { id: "in", label: "In range", color: "var(--interactive-accent)" },
   { id: "out", label: "Not in range", color: "var(--spotlab-hm-cell-bg)" },
 ];
-// The passive band must be drawn too: the editor's cell gradient doesn't
-// close itself, so an unpainted remainder would bleed the in-range color.
-const ORDER = [IN_RANGE, PASSIVE];
+const ORDER = [IN_RANGE];
 
 type Parsed =
   | { ok: true; hands: HandFrequency[] }

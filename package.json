@@ -36,8 +36,8 @@
     "typescript": "~6.0"
   },
   "dependencies": {
-    "@spotlab/hand-matrix": "^0.1.0",
-    "@spotlab/range": "^0.1.0",
+    "@spotlab/hand-matrix": "^0.2.0",
+    "@spotlab/range": "^0.2.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
   }

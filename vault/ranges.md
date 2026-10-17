@@ -10,6 +10,12 @@ A weighted range — mixed frequencies render as partially filled cells:
 AA,KK,QQ,JJ:0.75,TT:0.5,AKs,AQs:0.5,KQs:0.25,AKo:0.5
 ```
 
+Shorthand runs expand to every combo they cover:
+
+```pkr-range
+77+,A2s+,KTs+,QJs,ATo+,KQo,66-22:0.5
+```
+
 Suit-specific hands are preserved when you edit other combos:
 
 ```pkr-range

@@ -42,7 +42,7 @@ AA,KK,QQ,JJ:0.75,TT:0.5,AKs,AQs:0.5,AKo
 ```
 ````
 
-A range is a comma-separated list of combos (`AA`, `AKs`, `AKo`) or exact hands (`AhKh`), each optionally followed by `:frequency` between 0 and 1. Weighted combos render as partially filled cells. Shorthand like `22+`, `A2s+` or `TT-77` isn't supported yet. If the range can't be parsed, the block shows the parser's error instead of the matrix.
+A range is a comma-separated list of combos (`AA`, `AKs`, `AKo`), shorthand runs (`22+`, `A2s+`, `TT-77`) or exact hands (`AhKh`), each optionally followed by `:frequency` between 0 and 1. Weighted combos render as partially filled cells. If the range can't be parsed, the block shows the parser's error instead of the matrix.
 
 Click **Edit** on a rendered range to paint it:
 
