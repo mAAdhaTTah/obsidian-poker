@@ -316,7 +316,8 @@ class BaseCardIconsViewPlugin implements PluginValue {
 
 const parsedCards = new Map<string, Element>();
 
-function getCardSvg(card: keyof typeof CARDS): Element {
+/** A fresh copy of `card`'s SVG, parsed once and cloned on every call. */
+function getCardSvg(card: keyof typeof CARDS): Node {
   let svg = parsedCards.get(card);
   if (!svg) {
     svg = new DOMParser().parseFromString(
@@ -325,7 +326,7 @@ function getCardSvg(card: keyof typeof CARDS): Element {
     ).documentElement;
     parsedCards.set(card, svg);
   }
-  return svg;
+  return svg.cloneNode(true);
 }
 
 class CardRenderer {
@@ -341,8 +342,7 @@ class CardRenderer {
       let idx = 0;
       while (idx < this.cards.length) {
         const card = this.cards.substring(idx, idx + 2);
-        if (this.validCard(card))
-          replacement.appendChild(getCardSvg(card).cloneNode(true));
+        if (this.validCard(card)) replacement.appendChild(getCardSvg(card));
         idx = idx + 2;
       }
 
