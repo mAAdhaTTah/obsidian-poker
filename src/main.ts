@@ -319,8 +319,10 @@ const parsedCards = new Map<string, Element>();
 function getCardSvg(card: keyof typeof CARDS): Element {
   let svg = parsedCards.get(card);
   if (!svg) {
-    svg = new DOMParser().parseFromString(CARDS[card], "image/svg+xml")
-      .documentElement;
+    svg = new DOMParser().parseFromString(
+      CARDS[card],
+      "image/svg+xml",
+    ).documentElement;
     parsedCards.set(card, svg);
   }
   return svg;
