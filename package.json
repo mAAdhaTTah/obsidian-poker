@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "fix": "npm run fix:format && npm run fix:lint",
-    "fix:format": "prettier --write {*.mjs,*.ts,src/**/*.{ts,tsx}}",
-    "fix:lint": "eslint --fix {*.mjs,*.ts,src/**/*.{ts,tsx}}",
+    "fix:format": "prettier --write {*.mjs,src/**/*.{ts,tsx}}",
+    "fix:lint": "eslint --fix {*.mjs,src/**/*.{ts,tsx}}",
     "test": "npm run test:types && npm run test:format && npm run test:lint",
     "test:types": "tsc -noEmit -skipLibCheck",
-    "test:format": "prettier --check {*.mjs,*.ts,src/**/*.{ts,tsx}}",
-    "test:lint": "eslint {*.mjs,*.ts,src/**/*.{ts,tsx}}",
+    "test:format": "prettier --check {*.mjs,src/**/*.{ts,tsx}}",
+    "test:lint": "eslint {*.mjs,src/**/*.{ts,tsx}}",
     "build": "node esbuild.config.mjs production",
     "version": "node version-bump.mjs && git add manifest.json versions.json"
   },
