@@ -21,26 +21,25 @@ export class RangeRenderChild extends MarkdownRenderChild {
   }
 
   onload() {
-    void this.mount();
-  }
-
-  private async mount() {
     this.containerEl.addClass("pkr-range-container");
-    try {
-      await this.ready;
-    } catch (e) {
-      this.containerEl.createDiv({
-        cls: "pkr-range pkr-range-error",
-        text: `Poker: failed to load range parser (${
-          e instanceof Error ? e.message : String(e)
-        })`,
-      });
-      return;
-    }
-    // Unloaded while waiting on the wasm init.
-    if (this.unloaded) return;
-    this.root = createRoot(this.containerEl);
-    this.root.render(<RangeBlock source={this.source} onSave={this.save} />);
+    void this.ready.then(
+      () => {
+        // Unloaded while waiting on the wasm init.
+        if (this.unloaded) return;
+        this.root = createRoot(this.containerEl);
+        this.root.render(
+          <RangeBlock source={this.source} onSave={this.save} />,
+        );
+      },
+      (e: unknown) => {
+        this.containerEl.createDiv({
+          cls: "pkr-range pkr-range-error",
+          text: `Poker: failed to load range parser (${
+            e instanceof Error ? e.message : String(e)
+          })`,
+        });
+      },
+    );
   }
 
   onunload() {
