@@ -9,8 +9,9 @@ import {
 import {
   ActionWeightSliders,
   cellsToRanges,
-  RangeGrid,
+  RangeMatrix,
   RangeMatrixEditor,
+  rangeToMatrix,
   seedCells,
   type EditorActionSpec,
   type PaintTool,
@@ -73,15 +74,27 @@ type SingleRangeBlockProps = {
 };
 
 const SingleRangeBlock = ({ spec, onSave }: SingleRangeBlockProps) => {
-  const parsed = useMemo(() => attempt(() => parseRange(spec.source)), [spec]);
+  // rangeToMatrix makes wasm calls, so build the grid once per range.
+  const parsed = useMemo(
+    () =>
+      attempt(() => {
+        const hands = parseRange(spec.source);
+        const matrix = rangeToMatrix(hands, {
+          color: "var(--interactive-accent)",
+        });
+        return { hands, matrix };
+      }),
+    [spec],
+  );
   const [editing, setEditing] = useState(false);
 
   if (!parsed.ok) return <ErrorView message={parsed.message} />;
+  const { hands, matrix } = parsed.value;
 
   if (editing) {
     return (
       <SingleRangeEditor
-        hands={parsed.value}
+        hands={hands}
         onCancel={() => setEditing(false)}
         onSave={async range => {
           await onSave(range);
@@ -95,13 +108,13 @@ const SingleRangeBlock = ({ spec, onSave }: SingleRangeBlockProps) => {
     <div className="pkr-range">
       <div className="pkr-range-header">
         <span className="pkr-range-title">
-          {formatCombos(countCombos(parsed.value))}
+          {formatCombos(countCombos(hands))}
         </span>
         <button className="pkr-range-button" onClick={() => setEditing(true)}>
           Edit
         </button>
       </div>
-      <RangeGrid range={parsed.value} fill="var(--interactive-accent)" />
+      <RangeMatrix {...matrix} />
     </div>
   );
 };
