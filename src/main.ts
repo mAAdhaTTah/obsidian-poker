@@ -22,8 +22,8 @@ import {
   DecorationSet,
 } from "@codemirror/view";
 import { initRange } from "@spotlab/range";
-import { RangeRenderChild } from "./src/range/render-child";
-import { replaceCodeBlockBody } from "./src/range/write-back";
+import { RangeRenderChild } from "./range/render-child";
+import { replaceCodeBlockBody } from "./range/write-back";
 import svgXc from "./cards/Xc.svg";
 import svgXd from "./cards/Xd.svg";
 import svgXh from "./cards/Xh.svg";

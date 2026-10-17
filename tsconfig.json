@@ -13,5 +13,5 @@
     "strictNullChecks": true,
     "lib": ["DOM", "DOM.Iterable", "ES2018"]
   },
-  "include": ["**/*.ts", "**/*.tsx"]
+  "include": ["src"]
 }
