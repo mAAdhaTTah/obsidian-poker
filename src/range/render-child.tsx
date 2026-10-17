@@ -20,14 +20,20 @@ export class RangeRenderChild extends MarkdownRenderChild {
     super(containerEl);
   }
 
-  async onload() {
+  onload() {
+    void this.mount();
+  }
+
+  private async mount() {
     this.containerEl.addClass("pkr-range-container");
     try {
       await this.ready;
     } catch (e) {
       this.containerEl.createDiv({
         cls: "pkr-range pkr-range-error",
-        text: `Poker: failed to load range parser (${e})`,
+        text: `Poker: failed to load range parser (${
+          e instanceof Error ? e.message : String(e)
+        })`,
       });
       return;
     }

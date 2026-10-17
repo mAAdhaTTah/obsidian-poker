@@ -486,7 +486,11 @@ export default class Poker extends Plugin {
   onunload() {}
 
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    this.settings = Object.assign(
+      {},
+      DEFAULT_SETTINGS,
+      (await this.loadData()) as Partial<PokerSettings> | null,
+    );
   }
 
   async saveSettings() {
