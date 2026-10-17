@@ -176,7 +176,35 @@ describe("colors", () => {
     ["#abc", "#abc"],
     ["rgb(1, 2, 3)", "rgb(1, 2, 3)"],
   ])("resolves %j to %j", (color, css) => {
-    expect(resolveColor(color, 0)).toBe(css);
+    expect(resolveColor(color)).toBe(css);
+  });
+
+  it("skips palette colors the block already names", () => {
+    expect(
+      resolveColors(
+        multi("Raise:\n  range: QQ+\n  color: red\nCall: JJ\nFold:").actions,
+      ),
+    ).toEqual(["var(--color-red)", "var(--color-green)", "var(--color-blue)"]);
+  });
+
+  it("reuses the palette once every color is named", () => {
+    const source = [
+      "red",
+      "green",
+      "blue",
+      "orange",
+      "purple",
+      "cyan",
+      "yellow",
+      "pink",
+    ]
+      .map((color, i) => `A${i}:\n  range: AA\n  color: ${color}`)
+      .join("\n");
+    const colors = resolveColors(
+      multi(`${source}
+Rest:`).actions,
+    );
+    expect(colors[colors.length - 1]).toBe("var(--color-red)");
   });
 
   it("hands out palette colors in order to actions without one", () => {

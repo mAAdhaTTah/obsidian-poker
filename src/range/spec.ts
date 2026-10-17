@@ -209,23 +209,25 @@ const PALETTE_NAMES = new Set<string>(PALETTE);
  * Resolve a configured color to CSS. Palette names map to Obsidian's
  * `--color-*` variables and `--x` to `var(--x)`; anything else is used as-is.
  */
-export function resolveColor(
-  color: string | null,
-  fallbackIndex: number,
-): string {
-  if (color === null) {
-    return `var(--color-${PALETTE[fallbackIndex % PALETTE.length]})`;
-  }
+export function resolveColor(color: string): string {
   const value = color.trim();
   if (PALETTE_NAMES.has(value)) return `var(--color-${value})`;
   if (value.startsWith("--")) return `var(${value})`;
   return value;
 }
 
-/** Resolve every action's color, handing out palette colors in order. */
+/**
+ * Resolve every action's color. Actions without one take palette colors in
+ * order, skipping any the block already names so two actions don't match.
+ */
 export function resolveColors(actions: ActionSpec[]): string[] {
+  const named = new Set(actions.map(action => action.color?.trim()));
+  const free = PALETTE.filter(name => !named.has(name));
+  const pool = free.length > 0 ? free : PALETTE;
   let next = 0;
   return actions.map(action =>
-    resolveColor(action.color, action.color === null ? next++ : 0),
+    action.color === null
+      ? `var(--color-${pool[next++ % pool.length]})`
+      : resolveColor(action.color),
   );
 }
