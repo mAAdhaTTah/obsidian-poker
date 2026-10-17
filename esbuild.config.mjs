@@ -23,7 +23,7 @@ const context = await esbuild.context({
   banner: {
     js: banner,
   },
-  entryPoints: ["main.ts"],
+  entryPoints: { main: "main.ts", styles: "src/styles.css" },
   bundle: true,
   external: [
     "obsidian",
@@ -41,6 +41,9 @@ const context = await esbuild.context({
     "@lezer/lr",
     ...builtins,
   ],
+  define: {
+    "process.env.NODE_ENV": JSON.stringify(prod ? "production" : "development"),
+  },
   format: "cjs",
   target: "es2018",
   logLevel: "info",
@@ -50,13 +53,11 @@ const context = await esbuild.context({
     svg(),
     copy({
       resolveFrom: "cwd",
-      assets: [assetForFile("manifest.json"), assetForFile("styles.css")],
+      assets: [assetForFile("manifest.json")],
       watch: true,
     }),
   ],
-  outfile: prod
-    ? "dist/poker/main.js"
-    : "vault/.obsidian/plugins/poker/main.js",
+  outdir: prod ? "dist/poker" : "vault/.obsidian/plugins/poker",
 });
 
 if (prod) {

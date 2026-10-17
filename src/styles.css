@@ -1,0 +1,70 @@
+/* Bundled into the plugin's styles.css by esbuild (see esbuild.config.mjs). */
+@import "@spotlab/hand-matrix/style.css";
+
+.pkr-inline-cards {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/*
+ * Map the hand matrix onto Obsidian's theme variables so it follows light/dark
+ * mode and community themes. Must target `.spotlab-hm-root` itself: the
+ * package declares its defaults there (in a layer), so ancestors can't win.
+ */
+.pkr-range .spotlab-hm-root {
+  --spotlab-hm-border: var(--background-modifier-border);
+  --spotlab-hm-cell-bg: var(--background-primary);
+  --spotlab-hm-cell-fg: var(--text-normal);
+  --spotlab-hm-muted-bg: var(--background-secondary);
+  --spotlab-hm-muted-fg: var(--text-muted);
+  --spotlab-hm-fill: var(--interactive-accent);
+  --spotlab-hm-font-family: var(--font-monospace);
+  --spotlab-hm-radius: var(--radius-m);
+  --spotlab-hm-surface-bg: var(--background-primary);
+  --spotlab-hm-track-bg: var(--background-modifier-border);
+  --spotlab-hm-row-passive-bg: var(--background-secondary);
+}
+
+.pkr-range {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  max-width: 560px;
+  user-select: none;
+}
+
+.pkr-range-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+}
+
+.pkr-range-title {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.pkr-range-tools,
+.pkr-range-actions {
+  display: flex;
+  gap: var(--size-4-1);
+}
+
+.pkr-range-button[aria-pressed="true"] {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.pkr-range-error .pkr-range-title,
+.pkr-range-error-message {
+  color: var(--text-error);
+}
+
+.pkr-range-error-message {
+  margin: 0;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  white-space: pre-wrap;
+}

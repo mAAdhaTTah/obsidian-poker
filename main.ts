@@ -21,6 +21,9 @@ import {
   WidgetType,
   DecorationSet,
 } from "@codemirror/view";
+import { initRange } from "@spotlab/range";
+import { RangeRenderChild } from "./src/range/render-child";
+import { replaceCodeBlockBody } from "./src/range/write-back";
 import svgXc from "./cards/Xc.svg";
 import svgXd from "./cards/Xd.svg";
 import svgXh from "./cards/Xh.svg";
@@ -423,13 +426,17 @@ class InsertRandomCardsModal extends Modal {
 export default class Poker extends Plugin {
   settings!: PokerSettings;
   renderer!: InlinePokerCardRenderer;
+  rangeReady!: Promise<void>;
 
   async onload() {
     await this.loadSettings();
+    // Don't block plugin load on the wasm parser; range blocks await this.
+    this.rangeReady = initRange();
     this.renderer = new InlinePokerCardRenderer(this);
     this.addSettingTab(new PokerSettingTab(this.app, this));
     this.registerMarkdownPostProcessor(this.renderer.process);
     this.registerEditorExtension(BaseCardIconsViewPlugin.fromPlugin(this));
+    this.registerRangeBlocks();
 
     this.addCommand({
       id: "insert-random-cards",
@@ -449,6 +456,17 @@ export default class Poker extends Plugin {
       editor.getCursor(),
     );
   };
+
+  registerRangeBlocks() {
+    const language = `${this.settings.prefix}-range`;
+    this.registerMarkdownCodeBlockProcessor(language, (source, el, ctx) => {
+      ctx.addChild(
+        new RangeRenderChild(el, source, this.rangeReady, range =>
+          replaceCodeBlockBody(this.app, el, ctx, language, source, range),
+        ),
+      );
+    });
+  }
 
   onunload() {}
 
@@ -480,7 +498,9 @@ class PokerSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Prefix")
-      .setDesc("Prefix to use for rendering inline playing cards.")
+      .setDesc(
+        "Prefix for inline playing cards (`pkr:AsKs`) and range blocks (```pkr-range). Reload the plugin after changing it for range blocks to pick it up.",
+      )
       .addText(text =>
         text
           .setPlaceholder("pkr")
