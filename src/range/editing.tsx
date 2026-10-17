@@ -5,10 +5,9 @@ import type { EditorCell, PaintTool } from "@spotlab/hand-matrix";
 /** An error's message followed by each of its causes', for display. */
 export function describeError(error: unknown): string {
   if (!(error instanceof Error)) return String(error);
-  const { cause } = error as { cause?: unknown };
-  return cause === undefined
+  return error.cause === undefined
     ? error.message
-    : `${error.message}: ${describeError(cause)}`;
+    : `${error.message}: ${describeError(error.cause)}`;
 }
 
 /** Total number of starting hands in hold'em, for combo-count summaries. */

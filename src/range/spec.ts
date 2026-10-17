@@ -33,15 +33,7 @@ type YamlStringify = (value: unknown) => string;
 
 const LONG_KEYS = new Set(["range", "color"]);
 
-export class SpecError extends Error {
-  // `Error`'s own `cause` option is ES2022, past this project's ES2018 lib.
-  readonly cause?: unknown;
-
-  constructor(message: string, options?: { cause?: unknown }) {
-    super(message);
-    this.cause = options?.cause;
-  }
-}
+export class SpecError extends Error {}
 
 const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -190,7 +182,7 @@ export function stringifySpec(
   // An empty value marks the remainder; write it as `Fold:`, not `Fold: null`.
   return stringifyYaml(data)
     .replace(/: null$/gm, ":")
-    .replace(/\s+$/, "");
+    .trimEnd();
 }
 
 /** Obsidian's palette, in the order actions without a color receive them. */

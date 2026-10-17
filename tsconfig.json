@@ -11,7 +11,7 @@
     "importHelpers": true,
     "isolatedModules": true,
     "strictNullChecks": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2018"]
+    "lib": ["DOM", "DOM.Iterable", "ES2022"]
   },
   "include": ["src"]
 }

@@ -15,7 +15,7 @@ export function dedent(strings: TemplateStringsArray, ...values: unknown[]) {
   const indent = Math.min(
     ...lines
       .filter(line => line.trim())
-      .map(line => /^[ \t]*/.exec(line)?.[0].length ?? 0),
+      .map(line => line.length - line.trimStart().length),
   );
   return lines.map(line => line.slice(indent)).join("\n");
 }

@@ -312,7 +312,7 @@ describe("colors", () => {
       Rest:
     `;
     const colors = resolveColors(multi(source).actions);
-    expect(colors[colors.length - 1]).toBe("var(--color-red)");
+    expect(colors.at(-1)).toBe("var(--color-red)");
   });
 
   it("hands out palette colors in order to actions without one", () => {
