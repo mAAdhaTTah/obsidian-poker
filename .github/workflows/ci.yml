@@ -45,4 +45,5 @@ jobs:
 
           gh release create "$tag" \
             --title="$tag" \
+            --generate-notes \
             dist/poker/main.js dist/poker/manifest.json dist/poker/styles.css
