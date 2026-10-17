@@ -1,5 +1,6 @@
 import { MarkdownRenderChild } from "obsidian";
 import { createRoot, type Root } from "react-dom/client";
+import { describeError } from "./editing";
 import { RangeBlock } from "./range-block";
 
 /**
@@ -34,9 +35,7 @@ export class RangeRenderChild extends MarkdownRenderChild {
       (e: unknown) => {
         this.containerEl.createDiv({
           cls: "pkr-range pkr-range-error",
-          text: `Poker: failed to load range parser (${
-            e instanceof Error ? e.message : String(e)
-          })`,
+          text: `Poker: failed to load range parser (${describeError(e)})`,
         });
       },
     );

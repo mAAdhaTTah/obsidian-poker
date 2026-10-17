@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { parseYaml } from "obsidian";
 import {
   formatRange,
   parseRange,
@@ -6,85 +7,92 @@ import {
   type HandFrequency,
 } from "@spotlab/range";
 import {
-  ActionWeightSliders,
   cellsToRanges,
-  RangeGrid,
+  RangeMatrix,
   RangeMatrixEditor,
+  rangeToMatrix,
   seedCells,
   type EditorActionSpec,
-  type EditorCell,
   type PaintTool,
 } from "@spotlab/hand-matrix";
-
-/** Total number of starting hands in hold'em, for the combo-count summary. */
-const TOTAL_HANDS = 1326;
+import {
+  cellsChanged,
+  countCombos,
+  describeError,
+  EditorToolbar,
+  ErrorView,
+  formatCombos,
+  useSave,
+} from "./editing";
+import { WeightSliders } from "./weight-sliders";
+import { MultiRangeBlock } from "./multi-block";
+import { parseSpec, type BlockSpec } from "./spec";
 
 const IN_RANGE = 0;
 const PASSIVE = 1;
 
+const IN_RANGE_COLOR = "var(--interactive-accent)";
+
 const ACTIONS: EditorActionSpec[] = [
-  { id: "in", label: "In range", color: "var(--interactive-accent)" },
+  { id: "in", label: "In range", color: IN_RANGE_COLOR },
   { id: "out", label: "Not in range", color: "var(--spotlab-hm-cell-bg)" },
 ];
 const ORDER = [IN_RANGE];
 
-type Parsed =
-  | { ok: true; hands: HandFrequency[] }
-  | { ok: false; message: string };
+type Parsed<T> = { ok: true; value: T } | { ok: false; message: string };
 
-const parse = (source: string): Parsed => {
+const attempt = <T,>(fn: () => T): Parsed<T> => {
   try {
-    return { ok: true, hands: parseRange(source.trim()) };
+    return { ok: true, value: fn() };
   } catch (e) {
-    return { ok: false, message: e instanceof Error ? e.message : String(e) };
+    return { ok: false, message: describeError(e) };
   }
-};
-
-const sameWeights = (a: EditorCell, b: EditorCell) =>
-  a.avail === b.avail && a.weights.every((w, i) => w === b.weights[i]);
-
-/**
- * Rebuild the range from the painted cells. Combos the user didn't touch keep
- * their original hands verbatim (e.g. `AhKh:0.7` survives an edit elsewhere).
- */
-const toRange = (
-  original: HandFrequency[],
-  seed: EditorCell[],
-  cells: EditorCell[],
-): string =>
-  formatRange(cellsToRanges([original, null], seed, cells)[IN_RANGE]);
-
-const summarize = (hands: HandFrequency[]) => {
-  const combos = hands.reduce((sum, hf) => sum + hf.frequency, 0);
-  const pct = (combos / TOTAL_HANDS) * 100;
-  return `${+combos.toFixed(2)} combos · ${pct.toFixed(1)}%`;
 };
 
 export type RangeBlockProps = {
   source: string;
-  /** Persist a new range string into the note. Rejects if the write failed. */
-  onSave: (range: string) => Promise<void>;
+  /** Persist a new block body into the note. Rejects if the write failed. */
+  onSave: (body: string) => Promise<void>;
 };
 
 export const RangeBlock = ({ source, onSave }: RangeBlockProps) => {
-  const parsed = useMemo(() => parse(source), [source]);
+  const spec = useMemo(
+    () => attempt(() => parseSpec(source, parseYaml)),
+    [source],
+  );
+  if (!spec.ok) return <ErrorView message={spec.message} />;
+  return spec.value.kind === "multi" ? (
+    <MultiRangeBlock spec={spec.value} onSave={onSave} />
+  ) : (
+    <SingleRangeBlock spec={spec.value} onSave={onSave} />
+  );
+};
+
+type SingleRangeBlockProps = {
+  spec: Extract<BlockSpec, { kind: "single" }>;
+  onSave: (body: string) => Promise<void>;
+};
+
+const SingleRangeBlock = ({ spec, onSave }: SingleRangeBlockProps) => {
+  // rangeToMatrix makes wasm calls, so build the grid once per range.
+  const parsed = useMemo(
+    () =>
+      attempt(() => {
+        const hands = parseRange(spec.source);
+        const matrix = rangeToMatrix(hands, { color: IN_RANGE_COLOR });
+        return { hands, matrix };
+      }),
+    [spec],
+  );
   const [editing, setEditing] = useState(false);
 
-  if (!parsed.ok) {
-    return (
-      <div className="pkr-range pkr-range-error">
-        <div className="pkr-range-header">
-          <span className="pkr-range-title">Invalid range</span>
-        </div>
-        <pre className="pkr-range-error-message">{parsed.message}</pre>
-      </div>
-    );
-  }
+  if (!parsed.ok) return <ErrorView message={parsed.message} />;
+  const { hands, matrix } = parsed.value;
 
   if (editing) {
     return (
-      <RangeEditor
-        hands={parsed.hands}
+      <SingleRangeEditor
+        hands={hands}
         onCancel={() => setEditing(false)}
         onSave={async range => {
           await onSave(range);
@@ -97,23 +105,29 @@ export const RangeBlock = ({ source, onSave }: RangeBlockProps) => {
   return (
     <div className="pkr-range">
       <div className="pkr-range-header">
-        <span className="pkr-range-title">{summarize(parsed.hands)}</span>
         <button className="pkr-range-button" onClick={() => setEditing(true)}>
           Edit
         </button>
       </div>
-      <RangeGrid range={parsed.hands} fill="var(--interactive-accent)" />
+      <RangeMatrix {...matrix} />
+      <span className="pkr-range-title">
+        {formatCombos(countCombos(hands))}
+      </span>
     </div>
   );
 };
 
-type RangeEditorProps = {
+type SingleRangeEditorProps = {
   hands: HandFrequency[];
   onCancel: () => void;
   onSave: (range: string) => Promise<void>;
 };
 
-const RangeEditor = ({ hands, onCancel, onSave }: RangeEditorProps) => {
+const SingleRangeEditor = ({
+  hands,
+  onCancel,
+  onSave,
+}: SingleRangeEditorProps) => {
   const seed = useMemo(
     () => seedCells(null, [toComboWeights(hands), null], PASSIVE),
     [hands],
@@ -121,65 +135,28 @@ const RangeEditor = ({ hands, onCancel, onSave }: RangeEditorProps) => {
   const [cells, setCells] = useState(seed);
   const [brush, setBrush] = useState([100, 0]);
   const [tool, setTool] = useState<PaintTool>("brush");
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const dirty = cells.some((cell, i) => !sameWeights(cell, seed[i]));
-
-  const save = async () => {
-    if (!dirty) return onCancel();
-    setSaving(true);
-    setError(null);
-    try {
-      await onSave(toRange(hands, seed, cells));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-      setSaving(false);
-    }
-  };
-
-  const clear = () =>
-    setCells(cells.map(cell => ({ avail: cell.avail, weights: [0, 100] })));
+  // Combos the user didn't touch keep their original hands verbatim (e.g.
+  // `AhKh:0.7` survives an edit elsewhere).
+  const { saving, error, save } = useSave(() =>
+    cellsChanged(cells, seed)
+      ? onSave(formatRange(cellsToRanges([hands, null], seed, cells)[IN_RANGE]))
+      : Promise.resolve(onCancel()),
+  );
 
   return (
     <div className="pkr-range pkr-range-editing">
-      <div className="pkr-range-header">
-        <div className="pkr-range-tools" role="group" aria-label="Tool">
-          <button
-            className="pkr-range-button"
-            aria-pressed={tool === "brush"}
-            onClick={() => setTool("brush")}
-          >
-            Brush
-          </button>
-          <button
-            className="pkr-range-button"
-            aria-pressed={tool === "eyedropper"}
-            onClick={() => setTool("eyedropper")}
-          >
-            Eyedropper
-          </button>
-          <button className="pkr-range-button" onClick={clear}>
-            Clear
-          </button>
-        </div>
-        <div className="pkr-range-actions">
-          <button
-            className="pkr-range-button"
-            onClick={onCancel}
-            disabled={saving}
-          >
-            Cancel
-          </button>
-          <button
-            className="pkr-range-button mod-cta"
-            onClick={() => void save()}
-            disabled={saving}
-          >
-            Save
-          </button>
-        </div>
-      </div>
+      <EditorToolbar
+        tool={tool}
+        saving={saving}
+        onToolChange={setTool}
+        onClear={() =>
+          setCells(
+            cells.map(cell => ({ avail: cell.avail, weights: [0, 100] })),
+          )
+        }
+        onCancel={onCancel}
+        onSave={() => void save()}
+      />
       {error && <div className="pkr-range-error-message">{error}</div>}
       <RangeMatrixEditor
         cells={cells}
@@ -191,7 +168,7 @@ const RangeEditor = ({ hands, onCancel, onSave }: RangeEditorProps) => {
         onBrushChange={setBrush}
         onToolChange={setTool}
       />
-      <ActionWeightSliders
+      <WeightSliders
         actions={ACTIONS}
         order={ORDER}
         weights={brush}

@@ -55,6 +55,40 @@ Saving only rewrites the combos you painted. Everything else, including suit-spe
 
 If you change the prefix in settings, reload the plugin for range blocks to pick it up.
 
+#### Multiple actions
+
+To show a strategy, with several actions in one matrix, write the block as YAML. Each line maps an action's name to its range:
+
+````
+```pkr-range
+Raise 2.5bb: QQ+,AKs,AQs:0.5
+Call: JJ-99,AQs:0.5,AJs
+Fold:
+dead: 22-55
+```
+````
+
+- **Actions** are drawn in the order you write them, each in its own color, with a legend showing its combo count.
+- **Frequencies** are a share of the whole hand, so `Raise: AQs:0.5` and `Call: AQs:0.5` split AQs evenly. A hand's actions (plus `dead`) can add up to at most 1.
+- **The rest of the range** is left empty. To name it, add one action with no range, like `Fold:` above; it then gets a color and a legend entry for everything the other actions don't cover.
+- **`dead`** is a range of hands that aren't available, e.g. because of card removal. They're hatched in the matrix and limit what the actions can take.
+- **Colors** default to Obsidian's palette in order. To pick one, write the action in long form:
+
+  ````
+  ```pkr-range
+  Raise 2.5bb:
+    range: QQ+,AKs
+    color: red
+  Call: JJ-99
+  ```
+  ````
+
+  `color` takes an Obsidian palette name (`red`, `orange`, `yellow`, `green`, `cyan`, `blue`, `purple`, `pink`), a CSS variable (`--interactive-accent`), or any CSS color. Quote hex colors (`color: "#e5484d"`), since `#` otherwise starts a YAML comment.
+
+Action names can be almost anything (`Raise 2.5bb`, `3-bet`, `Call (1/3 pot)`). Quote a name that starts with a symbol, contains `#` or `: `, or is just a number. Write frequencies without a space after the colon: `AA:0.5`, not `AA: 0.5`.
+
+**Edit** works the same way, with a slider per action to mix the brush. Saving rewrites the whole block, so YAML comments in it aren't kept.
+
 ## Roadmap
 
 - Add support for card with no suit (e.g. `Kx`)
