@@ -1,7 +1,7 @@
 {
   "id": "poker",
   "name": "Poker",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "minAppVersion": "1.2.3",
   "description": "Easily document and view your poker hands.",
   "author": "James DiGioia",
