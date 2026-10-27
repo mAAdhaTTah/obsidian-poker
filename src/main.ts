@@ -219,19 +219,21 @@ const DEFAULT_SETTINGS: PokerSettings = {
 };
 
 class CardIconsWidget extends WidgetType {
-  constructor(readonly cards: string) {
+  cards: CardRenderer;
+  constructor(cards: string) {
     super();
+    this.cards = new CardRenderer(cards);
   }
 
   // Lets CodeMirror keep the existing DOM when a rebuild produces an equal
   // widget, even if edits earlier in the doc moved it. Recreating the cards
   // on every keystroke forces style recalculation and slows typing.
   eq(other: CardIconsWidget) {
-    return other.cards === this.cards;
+    return other.cards.cards === this.cards.cards;
   }
 
   toDOM(view: EditorView): HTMLElement {
-    return new CardRenderer(this.cards).getElement(view.dom);
+    return this.cards.getElement(view.dom);
   }
 }
 
@@ -338,7 +340,7 @@ function getCardSvg(card: keyof typeof CARDS): Node {
 }
 
 class CardRenderer {
-  constructor(private cards: string) {}
+  constructor(readonly cards: string) {}
 
   getElement(el: HTMLElement) {
     const replacement = el.createSpan({
