@@ -1,0 +1,13 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "changelog": [
+    "@changesets/changelog-github",
+    { "repo": "mAAdhaTTah/obsidian-poker" }
+  ],
+  "commit": false,
+  "baseBranch": "main",
+  "privatePackages": {
+    "version": true,
+    "tag": false
+  }
+}
