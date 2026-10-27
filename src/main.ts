@@ -225,9 +225,6 @@ class CardIconsWidget extends WidgetType {
     this.cards = new CardRenderer(cards);
   }
 
-  // Lets CodeMirror keep the existing DOM when a rebuild produces an equal
-  // widget, even if edits earlier in the doc moved it. Recreating the cards
-  // on every keystroke forces style recalculation and slows typing.
   eq(other: CardIconsWidget) {
     return other.cards.cards === this.cards.cards;
   }
