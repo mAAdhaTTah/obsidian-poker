@@ -274,9 +274,6 @@ class BaseCardIconsViewPlugin implements PluginValue {
   decorations!: DecorationSet;
 
   update(update: ViewUpdate) {
-    // Only visible ranges are decorated, so rebuild when the viewport moves
-    // or the parser extends the tree, not just on edits; otherwise cards
-    // scrolled into view (or unparsed when the note opened) stay as raw code.
     if (
       update.docChanged ||
       update.viewportChanged ||
