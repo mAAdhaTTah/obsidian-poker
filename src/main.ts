@@ -219,13 +219,18 @@ const DEFAULT_SETTINGS: PokerSettings = {
 };
 
 class CardIconsWidget extends WidgetType {
-  cards: CardRenderer;
+  renderer: CardRenderer;
   constructor(cards: string) {
     super();
-    this.cards = new CardRenderer(cards);
+    this.renderer = new CardRenderer(cards);
   }
+
+  eq(other: CardIconsWidget) {
+    return other.renderer.cards === this.renderer.cards;
+  }
+
   toDOM(view: EditorView): HTMLElement {
-    return this.cards.getElement(view.dom);
+    return this.renderer.getElement(view.dom);
   }
 }
 
@@ -264,12 +269,13 @@ class BaseCardIconsViewPlugin implements PluginValue {
 
   plugin!: Poker;
   decorations!: DecorationSet;
-  widgets: Record<string, Range<Decoration>> = {};
 
   update(update: ViewUpdate) {
     if (
       update.docChanged ||
-      update.startState.selection.main !== update.state.selection.main
+      update.viewportChanged ||
+      update.selectionSet ||
+      syntaxTree(update.startState) !== syntaxTree(update.state)
     ) {
       this.decorations = this.buildDecoration(update.view);
     }
@@ -294,14 +300,11 @@ class BaseCardIconsViewPlugin implements PluginValue {
               !isSelectionContainsTag(view, nodeFrom, nodeTo)
             ) {
               const [, cards] = match;
-              const cacheKey = `f:${nodeFrom};t:${nodeTo};c:${cards}`;
-              if (!(cacheKey in this.widgets)) {
-                const deco = Decoration.replace({
+              widgets.push(
+                Decoration.replace({
                   widget: new CardIconsWidget(cards),
-                });
-                this.widgets[cacheKey] = deco.range(nodeFrom, nodeTo);
-              }
-              widgets.push(this.widgets[cacheKey]);
+                }).range(nodeFrom, nodeTo),
+              );
             }
           }
         },
@@ -331,23 +334,17 @@ function getCardSvg(card: keyof typeof CARDS): Node {
 }
 
 class CardRenderer {
-  cache: WeakMap<HTMLElement, HTMLElement> = new WeakMap();
-  constructor(private cards: string) {}
+  constructor(readonly cards: string) {}
 
   getElement(el: HTMLElement) {
-    let replacement = this.cache.get(el);
-    if (!replacement) {
-      replacement = el.createSpan({
-        cls: "pkr-inline-cards",
-      });
-      let idx = 0;
-      while (idx < this.cards.length) {
-        const card = this.cards.substring(idx, idx + 2);
-        if (this.validCard(card)) replacement.appendChild(getCardSvg(card));
-        idx = idx + 2;
-      }
-
-      this.cache.set(el, replacement);
+    const replacement = el.createSpan({
+      cls: "pkr-inline-cards",
+    });
+    let idx = 0;
+    while (idx < this.cards.length) {
+      const card = this.cards.substring(idx, idx + 2);
+      if (this.validCard(card)) replacement.appendChild(getCardSvg(card));
+      idx = idx + 2;
     }
     return replacement;
   }
