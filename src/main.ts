@@ -219,13 +219,19 @@ const DEFAULT_SETTINGS: PokerSettings = {
 };
 
 class CardIconsWidget extends WidgetType {
-  cards: CardRenderer;
-  constructor(cards: string) {
+  constructor(readonly cards: string) {
     super();
-    this.cards = new CardRenderer(cards);
   }
+
+  // Lets CodeMirror keep the existing DOM when a rebuild produces an equal
+  // widget, even if edits earlier in the doc moved it. Recreating the cards
+  // on every keystroke forces style recalculation and slows typing.
+  eq(other: CardIconsWidget) {
+    return other.cards === this.cards;
+  }
+
   toDOM(view: EditorView): HTMLElement {
-    return this.cards.getElement(view.dom);
+    return new CardRenderer(this.cards).getElement(view.dom);
   }
 }
 
@@ -264,12 +270,16 @@ class BaseCardIconsViewPlugin implements PluginValue {
 
   plugin!: Poker;
   decorations!: DecorationSet;
-  widgets: Record<string, Range<Decoration>> = {};
 
   update(update: ViewUpdate) {
+    // Only visible ranges are decorated, so rebuild when the viewport moves
+    // or the parser extends the tree, not just on edits; otherwise cards
+    // scrolled into view (or unparsed when the note opened) stay as raw code.
     if (
       update.docChanged ||
-      update.startState.selection.main !== update.state.selection.main
+      update.viewportChanged ||
+      update.selectionSet ||
+      syntaxTree(update.startState) !== syntaxTree(update.state)
     ) {
       this.decorations = this.buildDecoration(update.view);
     }
@@ -294,14 +304,11 @@ class BaseCardIconsViewPlugin implements PluginValue {
               !isSelectionContainsTag(view, nodeFrom, nodeTo)
             ) {
               const [, cards] = match;
-              const cacheKey = `f:${nodeFrom};t:${nodeTo};c:${cards}`;
-              if (!(cacheKey in this.widgets)) {
-                const deco = Decoration.replace({
+              widgets.push(
+                Decoration.replace({
                   widget: new CardIconsWidget(cards),
-                });
-                this.widgets[cacheKey] = deco.range(nodeFrom, nodeTo);
-              }
-              widgets.push(this.widgets[cacheKey]);
+                }).range(nodeFrom, nodeTo),
+              );
             }
           }
         },
@@ -331,23 +338,17 @@ function getCardSvg(card: keyof typeof CARDS): Node {
 }
 
 class CardRenderer {
-  cache: WeakMap<HTMLElement, HTMLElement> = new WeakMap();
   constructor(private cards: string) {}
 
   getElement(el: HTMLElement) {
-    let replacement = this.cache.get(el);
-    if (!replacement) {
-      replacement = el.createSpan({
-        cls: "pkr-inline-cards",
-      });
-      let idx = 0;
-      while (idx < this.cards.length) {
-        const card = this.cards.substring(idx, idx + 2);
-        if (this.validCard(card)) replacement.appendChild(getCardSvg(card));
-        idx = idx + 2;
-      }
-
-      this.cache.set(el, replacement);
+    const replacement = el.createSpan({
+      cls: "pkr-inline-cards",
+    });
+    let idx = 0;
+    while (idx < this.cards.length) {
+      const card = this.cards.substring(idx, idx + 2);
+      if (this.validCard(card)) replacement.appendChild(getCardSvg(card));
+      idx = idx + 2;
     }
     return replacement;
   }
