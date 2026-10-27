@@ -219,18 +219,18 @@ const DEFAULT_SETTINGS: PokerSettings = {
 };
 
 class CardIconsWidget extends WidgetType {
-  cards: CardRenderer;
+  renderer: CardRenderer;
   constructor(cards: string) {
     super();
-    this.cards = new CardRenderer(cards);
+    this.renderer = new CardRenderer(cards);
   }
 
   eq(other: CardIconsWidget) {
-    return other.cards.cards === this.cards.cards;
+    return other.renderer.cards === this.renderer.cards;
   }
 
   toDOM(view: EditorView): HTMLElement {
-    return this.cards.getElement(view.dom);
+    return this.renderer.getElement(view.dom);
   }
 }
 
