@@ -12,7 +12,7 @@ export default defineConfig([
       parserOptions: {
         sourceType: "module",
         projectService: {
-          allowDefaultProject: ["eslint.config.*", "*.mjs"],
+          allowDefaultProject: ["eslint.config.*", "*.mjs", "scripts/*.mjs"],
         },
       },
     },
@@ -26,7 +26,7 @@ export default defineConfig([
   },
   {
     // Dev tooling run by Node; never bundled into the plugin.
-    files: ["*.mjs"],
+    files: ["*.mjs", "scripts/*.mjs"],
     rules: {
       "obsidianmd/no-nodejs-modules": "off",
       "obsidianmd/hardcoded-config-path": "off",

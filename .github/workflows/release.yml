@@ -98,7 +98,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.release.outputs.version }}
         run: |
-          node release-notes.mjs "$VERSION" > release-notes.md
+          node scripts/release-notes.mjs "$VERSION" > release-notes.md
 
           gh release create "$VERSION" \
             --target "$GITHUB_SHA" \

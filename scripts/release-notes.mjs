@@ -4,7 +4,7 @@ import { readFileSync } from "fs";
 const [version] = process.argv.slice(2);
 
 if (!version) {
-  console.error("Usage: node release-notes.mjs <version>");
+  console.error("Usage: node scripts/release-notes.mjs <version>");
   process.exit(1);
 }
 

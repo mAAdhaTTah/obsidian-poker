@@ -7,16 +7,16 @@
   "scripts": {
     "dev": "node esbuild.config.mjs",
     "fix": "npm run fix:format && npm run fix:lint",
-    "fix:format": "prettier --write {*.mjs,src/**/*.{ts,tsx}}",
+    "fix:format": "prettier --write {*.mjs,scripts/*.mjs,src/**/*.{ts,tsx}}",
     "fix:lint": "eslint --fix .",
     "test": "npm run test:types && npm run test:format && npm run test:lint && npm run test:unit",
     "test:types": "tsc -noEmit -skipLibCheck",
-    "test:format": "prettier --check {*.mjs,src/**/*.{ts,tsx}}",
+    "test:format": "prettier --check {*.mjs,scripts/*.mjs,src/**/*.{ts,tsx}}",
     "test:lint": "eslint .",
     "test:unit": "vitest run",
     "build": "node esbuild.config.mjs production",
     "changeset": "changeset",
-    "version-packages": "changeset version && node version-bump.mjs && npm install --package-lock-only"
+    "version-packages": "changeset version && node scripts/version-bump.mjs && npm install --package-lock-only"
   },
   "keywords": [],
   "author": "",
