@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+jobs:
+  release-pr:
+    name: Create release PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      has-changesets: ${{ steps.changesets.outputs.has-changesets }}
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install node_modules
+        run: npm ci
+      - name: Create or update release PR
+        id: changesets
+        uses: changesets/action@v2
+        with:
+          version-script: npm run version-packages
+          commit-message: Release
+          pr-title: Release
+        env:
+          # @changesets/changelog-github looks up PR links and authors with this
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  publish:
+    name: Publish release
+    needs: release-pr
+    if: needs.release-pr.outputs.has-changesets == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Check for an existing release
+        id: release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(node -p "require('./manifest.json').version")"
+          package_version="$(node -p "require('./package.json').version")"
+
+          if [ "$version" != "$package_version" ]; then
+            echo "::error::manifest.json version ($version) does not match package.json version ($package_version)."
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          if gh release view "$version" > /dev/null 2>&1; then
+            echo "Release $version already exists, nothing to publish."
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Setup Node.js
+        if: steps.release.outputs.exists == 'false'
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22.x
+          cache: npm
+      - name: Install node_modules
+        if: steps.release.outputs.exists == 'false'
+        run: npm ci
+      - name: Test
+        if: steps.release.outputs.exists == 'false'
+        run: npm test
+      - name: Build
+        if: steps.release.outputs.exists == 'false'
+        run: npm run build
+      - name: Attest release assets
+        if: steps.release.outputs.exists == 'false'
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/poker/main.js
+            dist/poker/manifest.json
+            dist/poker/styles.css
+      - name: Create release
+        if: steps.release.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          node scripts/release-notes.mjs "$VERSION" > release-notes.md
+
+          gh release create "$VERSION" \
+            --target "$GITHUB_SHA" \
+            --title "$VERSION" \
+            --notes-file release-notes.md \
+            --generate-notes \
+            dist/poker/main.js dist/poker/manifest.json dist/poker/styles.css

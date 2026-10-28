@@ -95,3 +95,15 @@ Action names can be almost anything (`Raise 2.5bb`, `3-bet`, `Call (1/3 pot)`). 
 - Add support for unknown suited or offsuit cards or other cards (e.g. `KsXo`, `KsXs`, or `KsX`)
 - Add command to generate a random number of cards (e.g. to generate a random flop)
 - Add a hand replayer using markdown codeblocks & YAML to define a hand and show a replayer in preview to watch it
+
+## Releasing
+
+Releases are automated with [Changesets](https://github.com/changesets/changesets):
+
+1. In each PR that changes the plugin for users, run `npx changeset`, pick the bump type, and write the release note. Commit the file it creates in `.changeset/`.
+2. Merging to `main` opens or updates a "Release" PR. It bumps `package.json`, `manifest.json` and `versions.json`, and moves the notes into `CHANGELOG.md`.
+3. Merging the Release PR builds the plugin and publishes the GitHub release, tagged with the bare version (e.g. `1.5.0`). The notes are that version's `CHANGELOG.md` section, followed by GitHub's generated list of PRs.
+
+To raise the minimum Obsidian version, edit `minAppVersion` in `manifest.json` in the PR that needs it. The next release records it in `versions.json`.
+
+The Release PR is opened by GitHub Actions, so CI doesn't run on it. To run checks there, close and reopen the PR. The release job runs the full test suite before publishing either way.
